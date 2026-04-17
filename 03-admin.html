@@ -375,8 +375,9 @@ function renderOrders(){
       const rows=ords.filter(o=>o.dish===dk&&o.rice===r);
       const t=rows.reduce((s,o)=>s+o.qty,0); if(!t) return;
       const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
-      /* 純菜名：去除「主菜一：」等前綴 */
+      /* 純菜名：去除「＋養生飯/白飯」後綴、去除「主菜一：」等前綴 */
       let nm=rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
+      nm=nm.replace(/＋(白飯|養生飯)$/,'');
       if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
       sb+=`<tr>
         <td>${dishLbl(dk)}</td>
@@ -394,6 +395,7 @@ function renderOrders(){
   let ob='';
   ords.forEach(o=>{
     let nm=o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
+    nm=nm.replace(/＋(白飯|養生飯)$/,'');
     if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
     ob+=`<tr>
       <td>${o.emp}</td><td>${o.name}</td><td>${o.dept}</td>

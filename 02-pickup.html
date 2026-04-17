@@ -265,8 +265,9 @@ function render(){
       const rows=allOrds.filter(o=>o.dish===dk&&o.rice===r);
       const t=rows.reduce((s,o)=>s+o.qty,0);if(!t)return;
       const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
-      /* 純菜名：去除「主菜一：」等前綴 */
+      /* 純菜名：去除「＋養生飯/白飯」後綴、去除「主菜一：」等前綴 */
       let nm=rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
+      nm=nm.replace(/＋(白飯|養生飯)$/,'');
       if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
       sb+=`<tr>
         <td>${dishLbl(dk)}</td>
@@ -312,8 +313,10 @@ function render(){
         merged[k].qty+=o.qty;
       });
       const mealRows=Object.values(merged).map(m=>{
-        /* 純菜名：去除「主菜一：」等前綴 */
-        let nm=m.nm; if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
+        /* 純菜名：去除「＋養生飯/白飯」後綴、去除「主菜一：」等前綴 */
+        let nm=m.nm||'';
+        nm=nm.replace(/＋(白飯|養生飯)$/,'');
+        if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
         return `<div class="sc-meal-row">
           <span class="sc-meal-lbl">${m.rice}</span>
           <span class="sc-meal-name">${nm}</span>

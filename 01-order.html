@@ -501,7 +501,9 @@ function renderMealList(){
       const isSold=sold;
       const soldTag=isSold?'<span class="sold-tag">已售完</span>':'';
       const limitTag=(d.limit>0&&!isSold)?`<span class="limit-tag">限${d.limit}份，已訂${m1count}</span>`:'';
+      /* cartName 顯示用（含飯別），dishName 儲存用（純菜名，不含飯別） */
       const cartName=`${d.name}＋${rn}`;
+      const pureName=d.name; /* 純菜名，存入 Firebase */
 
       html+=`
       <div class="mi ${qty>0?'sel':''} ${isSold?'sold':''}" id="mi-${rk}">
@@ -512,9 +514,9 @@ function renderMealList(){
         <div class="mi-sub">${dishLbl(d.key)}</div>
         <div class="qty-row" style="margin-top:8px">
           <span class="ql">份數：</span>
-          <button class="qb" onclick="chgQty('${d.key}','${riceType}',-1,'${cartName}')">−</button>
+          <button class="qb" onclick="chgQty('${d.key}','${riceType}',-1,'${cartName}','${pureName}')">−</button>
           <span class="qn" id="qn-${rk}">${qty}</span>
-          <button class="qb" onclick="chgQty('${d.key}','${riceType}',1,'${cartName}')">＋</button>
+          <button class="qb" onclick="chgQty('${d.key}','${riceType}',1,'${cartName}','${pureName}')">＋</button>
         </div>
       </div>`;
     });
@@ -523,9 +525,9 @@ function renderMealList(){
   $('meal-list').innerHTML=html;
 }
 
-function chgQty(dish,riceType,delta,name){
+function chgQty(dish,riceType,delta,name,pureName){
   let ci=cart.find(c=>c.dish===dish&&c.rice===riceType);
-  if(!ci){ if(delta<=0) return; ci={dish,rice:riceType,name,qty:0}; cart.push(ci); }
+  if(!ci){ if(delta<=0) return; ci={dish,rice:riceType,name,pureName:pureName||name,qty:0}; cart.push(ci); }
   ci.qty=Math.max(0,ci.qty+delta);
   if(ci.qty===0) cart=cart.filter(c=>!(c.dish===dish&&c.rice===riceType));
   const rk=dish+'-'+riceType;
@@ -558,7 +560,7 @@ async function submitOrder(){
       id, emp:currentUser.emp, name:currentUser.name||currentUser.emp,
       dept:currentUser.dept||'實習生', date, mealType, loc,
       dish:c.dish, rice:c.rice, qty:c.qty,
-      dishName:c.name,  /* 儲存實際菜名方便取餐頁顯示 */
+      dishName: c.pureName || c.name.replace(/＋(白飯|養生飯)$/,''), /* 純菜名，不含飯別 */
       status:'pending', ts:Date.now()
     };
   });
@@ -589,12 +591,14 @@ function renderMyPickup(){
     if(!merged[k]) merged[k]={...o}; else merged[k].qty+=o.qty;
   });
   list.innerHTML=Object.values(merged).map(o=>{
-    const nm=o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
-    /* 取純菜名（去除可能含有的「主菜一：」前綴） */
-    const cleanName=nm.includes('：')?nm.split('：').slice(1).join('：'):nm;
+    /* 取純菜名（去除飯別後綴，去除類別前綴） */
+    let nm=o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
+    nm=nm.replace(/＋(白飯|養生飯)$/,'');         /* 去除飯別後綴 */
+    if(nm.includes('：')) nm=nm.split('：').slice(1).join('：'); /* 去除類別前綴 */
+    const riceStr=riceLbl(o.rice);
     return `
     <div class="pcard ${o.status==='done'?'done':''}">
-      <div class="pc-name">${cleanName}＋${riceLbl(o.rice)}</div>
+      <div class="pc-name">${nm}＋${riceStr}</div>
       <div class="pc-items">
         ${o.qty} 份　📍 ${locLbl(o.loc)}　🍽️ ${typeLbl(o.mealType)}<br>
         📅 ${fmtD(o.date)}
