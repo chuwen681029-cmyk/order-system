@@ -159,14 +159,35 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--g100);color:var(--g8
 
       <div id="sec-menu" class="sec">
         <div class="page-title">📝 菜單管理</div>
-        <div class="page-sub">輸入每週供餐菜色</div>
+        <div class="page-sub">輸入每週供餐菜色，新增後立即同步到訂餐系統</div>
+
+        <!-- 批次匯入區 -->
+        <div class="card" style="border:2px solid var(--blue);margin-bottom:16px">
+          <div class="card-hd" style="background:var(--blue-bg)">
+            <div class="card-title" style="color:var(--blue)">📥 批次匯入菜單（建議優先使用）</div>
+          </div>
+          <div class="card-bd">
+            <div style="font-size:13px;color:var(--g600);margin-bottom:12px;line-height:1.8">
+              CSV 格式（第一列為標題，之後每列一天）：<br>
+              <code style="background:var(--g100);padding:2px 8px;border-radius:4px;font-size:12px">日期,主菜一,主菜二,素食,晚餐</code><br>
+              例：<code style="background:var(--g100);padding:2px 8px;border-radius:4px;font-size:12px">2026/04/22,肉骨茶燉肉,野菇蒜味雞塊,素麻婆豆腐,清蒸檸檬鱸魚</code>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <label class="import-btn" style="border-color:var(--blue);color:var(--blue)">
+                📂 選擇 CSV 檔案
+                <input type="file" accept=".csv,.xlsx" style="display:none" onchange="importMenuCSV(this)">
+              </label>
+              <button class="btn" style="background:var(--blue);color:#fff;padding:9px 20px" onclick="saveImportedMenus()">🔄 寫入 Firebase（同步）</button>
+              <span id="import-status" style="font-size:13px;color:var(--g500)"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 手動單筆新增 -->
         <div class="card">
           <div class="card-hd">
-            <div class="card-title">新增菜單（單筆）</div>
-            <div style="display:flex;gap:8px">
-              <label class="import-btn">📂 匯入 CSV<input type="file" accept=".csv" style="display:none" onchange="importMenuCSV(this)"></label>
-              <button class="btn" style="background:var(--blue);color:#fff" onclick="saveImportedMenus()">🔄 執行更新</button>
-            </div>
+            <div class="card-title">✏️ 手動新增單筆菜單</div>
+            <span id="menu-firebase-status" class="badge bdg-g" style="display:none">已同步 Firebase ✅</span>
           </div>
           <div class="card-bd">
             <div class="row5">
@@ -175,14 +196,20 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--g100);color:var(--g8
               <div><div class="lbl">主菜二</div><input class="fc" id="m-m2" placeholder="例：酒釀雞腿"></div>
               <div><div class="lbl">素食</div><input class="fc" id="m-veg" placeholder="例：紅燒豆皮結"></div>
               <div><div class="lbl">晚餐</div><input class="fc" id="m-din" placeholder="例：栗子燒肉"></div>
-              <div><button class="btn btn-g btn-full" onclick="addMenu()">新增</button></div>
+              <div><button class="btn btn-g btn-full" onclick="addMenu()">新增並同步</button></div>
             </div>
           </div>
         </div>
         <div class="card">
-          <div class="card-hd"><div class="card-title">菜單列表</div><button class="btn btn-r" onclick="clearAllMenus()">🗑️ 全部刪除</button></div>
+          <div class="card-hd">
+            <div class="card-title">Firebase 菜單列表（即時同步）</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font-size:12px;color:var(--g500)" id="menu-count-label"></span>
+              <button class="btn btn-r" onclick="clearAllMenus()">🗑️ 全部刪除</button>
+            </div>
+          </div>
           <div class="card-bd" style="padding:0"><div class="tbl-wrap">
-            <table class="tbl"><thead><tr><th>日期</th><th>主菜一</th><th>主菜二</th><th>素食</th><th>晚餐</th><th>操作</th></tr></thead>
+            <table class="tbl"><thead><tr><th>日期</th><th>主菜一（限80份）</th><th>主菜二</th><th>素食</th><th>晚餐</th><th>操作</th></tr></thead>
             <tbody id="menu-tbody"></tbody></table>
           </div></div>
         </div>
@@ -380,47 +407,82 @@ function exportOrders(){
 function renderMenuTable(){
   const menus=DB.menus||{};
   const keys=Object.keys(menus).sort();
-  if(!keys.length){$('menu-tbody').innerHTML='<tr><td colspan="6" class="no-data">尚無菜單</td></tr>';return;}
+  const countEl=$('menu-count-label');
+  if(countEl) countEl.textContent='共 '+keys.length+' 筆（Firebase 即時同步）';
+  if(!keys.length){$('menu-tbody').innerHTML='<tr><td colspan="6" class="no-data">尚無菜單，請新增或匯入 CSV</td></tr>';return;}
   $('menu-tbody').innerHTML=keys.map(d=>{
     const m=menus[d];
-    return `<tr><td>${fmtD(d)}</td><td>${m.main1||'—'}</td><td>${m.main2||'—'}</td><td>${m.veg||'—'}</td><td>${m.dinner||'—'}</td>
-    <td><button class="btn btn-r" onclick="delMenu('${d}')">刪除</button></td></tr>`;
+    const isPast=d<new Date().toISOString().slice(0,10);
+    return `<tr style="${isPast?'opacity:.5':''}">
+      <td><b>${fmtD(d)}</b>${isPast?'<span style="font-size:11px;color:var(--g400);margin-left:4px">已過期</span>':''}</td>
+      <td>${m.main1||'—'}</td><td>${m.main2||'—'}</td><td>${m.veg||'—'}</td><td>${m.dinner||'—'}</td>
+      <td><button class="btn btn-r" onclick="delMenu('${d}')">刪除</button></td></tr>`;
   }).join('');
 }
+
 async function addMenu(){
   const date=$('m-date').value,m1=$('m-m1').value.trim(),m2=$('m-m2').value.trim(),veg=$('m-veg').value.trim(),din=$('m-din').value.trim();
-  if(!date||!m1||!m2||!veg){toast('請填寫日期及三種主菜','tr');return;}
-  if((DB.menus||{})[date]){toast('此日期菜單已存在','tr');return;}
-  await set(ref(db,'menus/'+date),{main1:m1,main2:m2,veg,dinner:din,main1Limit:80,holiday:false});
-  toast('菜單新增成功','tg');
-  ['m-date','m-m1','m-m2','m-veg','m-din'].forEach(id=>{const e=$(id);if(e)e.value='';});
+  if(!date||!m1||!m2||!veg){toast('請填寫日期及三種主菜（素食必填）','tr');return;}
+  const menuData={main1:m1,main2:m2,veg,dinner:din,main1Limit:80,holiday:false};
+  try{
+    await set(ref(db,'menus/'+date),menuData);
+    toast('✅ 菜單已寫入 Firebase，訂餐頁面即時同步！','tg');
+    ['m-date','m-m1','m-m2','m-veg','m-din'].forEach(id=>{const e=$(id);if(e)e.value='';});
+    const badge=$('menu-firebase-status');
+    if(badge){badge.style.display='inline-block';setTimeout(()=>badge.style.display='none',3000);}
+  }catch(err){
+    toast('❌ 寫入失敗：'+err.message,'tr');
+  }
 }
 async function delMenu(date){if(!confirm('確定刪除 '+fmtD(date)+' 的菜單？'))return;await remove(ref(db,'menus/'+date));toast('已刪除','tg');}
-async function clearAllMenus(){if(!confirm('確定刪除全部菜單？'))return;await set(ref(db,'menus'),{});toast('已清空','tg');}
+async function clearAllMenus(){if(!confirm('確定刪除全部菜單？此操作會清空 Firebase 中所有菜單'))return;await set(ref(db,'menus'),{});toast('已清空所有菜單','tg');}
+
 function importMenuCSV(input){
   const file=input.files[0];if(!file)return;
+  const statusEl=$('import-status');
   const reader=new FileReader();
   reader.onload=e=>{
-    const lines=e.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
+    const text=e.target.result;
+    const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
     importedMenus={};
-    lines.slice(1).forEach(line=>{
-      const cols=line.split(',').map(c=>c.replace(/^"|"$/g,'').trim());
-      if(cols.length<4)return;
-      const [date,m1,m2,veg,...rest]=cols;const dinner=rest[0]||'';
-      if(!date||date==='日期')return;
-      importedMenus[date.replace(/\//g,'-')]={main1:m1,main2:m2,veg,dinner,main1Limit:80,holiday:false};
+    let count=0;
+    lines.forEach((line,idx)=>{
+      if(idx===0&&(line.includes('日期')||line.includes('date'))) return; // skip header
+      // handle both comma and tab separated, and quoted fields
+      const cols=line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').trim());
+      if(cols.length<4) return;
+      const [rawDate,m1,m2,veg,...rest]=cols;
+      const dinner=rest[0]||'';
+      if(!rawDate||!m1) return;
+      const dateKey=rawDate.replace(/\//g,'-').replace(/年|月/g,'-').replace(/日/g,'').trim();
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
+      importedMenus[dateKey]={main1:m1,main2:m2,veg,dinner,main1Limit:80,holiday:false};
+      count++;
     });
-    toast('已讀取 '+Object.keys(importedMenus).length+' 筆，請點執行更新','tg');
+    if(statusEl) statusEl.textContent='✅ 已讀取 '+count+' 筆，請點「寫入 Firebase」';
+    toast('已讀取 '+count+' 筆菜單，請點「寫入 Firebase」','tg');
   };
   reader.readAsText(file,'UTF-8');input.value='';
 }
+
 async function saveImportedMenus(){
-  if(!importedMenus){toast('請先匯入 CSV','tr');return;}
-  const updates={};
-  Object.entries(importedMenus).forEach(([d,m])=>{updates['menus/'+d]=m;});
-  await update(ref(db,'/'),updates);
-  toast('已更新 '+Object.keys(importedMenus).length+' 筆菜單','tg');
-  importedMenus=null;
+  if(!importedMenus||Object.keys(importedMenus).length===0){
+    toast('請先選擇 CSV 檔案','tr');return;
+  }
+  const statusEl=$('import-status');
+  if(statusEl) statusEl.textContent='寫入中...';
+  try{
+    const updates={};
+    Object.entries(importedMenus).forEach(([d,m])=>{updates['menus/'+d]=m;});
+    await update(ref(db,'/'),updates);
+    const count=Object.keys(importedMenus).length;
+    if(statusEl) statusEl.textContent='✅ 已成功寫入 Firebase '+count+' 筆菜單！';
+    toast('✅ 已寫入 Firebase '+count+' 筆！訂餐系統即時同步！','tg');
+    importedMenus=null;
+  }catch(err){
+    if(statusEl) statusEl.textContent='❌ 寫入失敗：'+err.message;
+    toast('❌ 寫入失敗，請重試','tr');
+  }
 }
 
 /* Staff */
