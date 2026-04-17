@@ -144,14 +144,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--g100);color:var(--g8
         <div class="card">
           <div class="card-hd"><div class="card-title">份數彙總</div></div>
           <div class="card-bd" style="padding:0"><div class="tbl-wrap">
-            <table class="tbl"><thead><tr><th>餐別組合</th><th style="text-align:center">訂購</th><th style="text-align:center">已領</th><th style="text-align:center">未領</th></tr></thead>
+            <table class="tbl"><thead><tr><th>類別</th><th>菜名</th><th>飯種</th><th style="text-align:center">訂購</th><th style="text-align:center">已領</th><th style="text-align:center">未領</th></tr></thead>
             <tbody id="sum-tbody"></tbody></table>
           </div></div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-title">訂單明細</div></div>
           <div class="card-bd" style="padding:0"><div class="tbl-wrap">
-            <table class="tbl"><thead><tr><th>員編</th><th>姓名</th><th>部門</th><th>日期</th><th>餐別</th><th>地點</th><th>主食</th><th>飯種</th><th>份數</th><th>狀態</th><th>操作</th></tr></thead>
+            <table class="tbl"><thead><tr><th>員編</th><th>姓名</th><th>部門</th><th>日期</th><th>餐別</th><th>地點</th><th>類別</th><th>菜名</th><th>飯種</th><th>份數</th><th>狀態</th><th>操作</th></tr></thead>
             <tbody id="ord-tbody"></tbody></table>
           </div></div>
         </div>
@@ -190,13 +190,19 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--g100);color:var(--g8
             <span id="menu-firebase-status" class="badge bdg-g" style="display:none">已同步 Firebase ✅</span>
           </div>
           <div class="card-bd">
-            <div class="row5">
+            <div style="font-size:13px;font-weight:700;color:var(--pri);margin-bottom:8px;padding:6px 10px;background:var(--pri-bg);border-radius:6px">🌞 午餐</div>
+            <div style="display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:8px;margin-bottom:14px">
               <div><div class="lbl">日期</div><input class="fc" type="date" id="m-date"></div>
               <div><div class="lbl">主菜一（限80份）</div><input class="fc" id="m-m1" placeholder="例：椒鹽豬柳"></div>
               <div><div class="lbl">主菜二</div><input class="fc" id="m-m2" placeholder="例：酒釀雞腿"></div>
               <div><div class="lbl">素食</div><input class="fc" id="m-veg" placeholder="例：紅燒豆皮結"></div>
-              <div><div class="lbl">晚餐</div><input class="fc" id="m-din" placeholder="例：栗子燒肉"></div>
-              <div><button class="btn btn-g btn-full" onclick="addMenu()">新增並同步</button></div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:#7c3aed;margin-bottom:8px;padding:6px 10px;background:#f5f3ff;border-radius:6px">🌙 晚餐</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 100px;gap:8px;margin-bottom:14px">
+              <div><div class="lbl">晚餐主菜一</div><input class="fc" id="m-dm1" placeholder="例：栗子燒肉"></div>
+              <div><div class="lbl">晚餐主菜二</div><input class="fc" id="m-dm2" placeholder="例：法式烤雞腿"></div>
+              <div><div class="lbl">晚餐素食</div><input class="fc" id="m-dveg" placeholder="例：素三寶"></div>
+              <div style="display:flex;align-items:flex-end"><button class="btn btn-g btn-full" onclick="addMenu()">新增並同步</button></div>
             </div>
           </div>
         </div>
@@ -209,7 +215,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--g100);color:var(--g8
             </div>
           </div>
           <div class="card-bd" style="padding:0"><div class="tbl-wrap">
-            <table class="tbl"><thead><tr><th>日期</th><th>主菜一（限80份）</th><th>主菜二</th><th>素食</th><th>晚餐</th><th>操作</th></tr></thead>
+            <table class="tbl"><thead><tr><th>日期</th><th>午餐主菜一</th><th>午餐主菜二</th><th>午餐素食</th><th>晚餐主菜一</th><th>晚餐主菜二</th><th>晚餐素食</th><th>操作</th></tr></thead>
             <tbody id="menu-tbody"></tbody></table>
           </div></div>
         </div>
@@ -291,14 +297,15 @@ let loggedAdmin = null;
 let importedMenus = null;
 
 const $ = id=>document.getElementById(id);
-function dishLbl(d){return{main1:'主菜一',main2:'主菜二',veg:'素食',dinner:'晚餐'}[d]||d}
+function dishLbl(d){return{main1:'午餐主菜一',main2:'午餐主菜二',veg:'午餐素食',dinnerMain1:'晚餐主菜一',dinnerMain2:'晚餐主菜二',dinnerVeg:'晚餐素食'}[d]||d}
+function dishName(d,menu){if(!menu)return dishLbl(d);return menu[d]||dishLbl(d);}
 function riceLbl(r){return r==='white'?'白飯':'養生飯'}
 function locLbl(l){return l==='douliou'?'斗六院區':'虎尾院區'}
 function fmtD(d){return d?d.replace(/-/g,'/'):''}
 function toast(msg,cls='tg'){const el=$('toast');el.textContent=msg;el.className='show '+cls;clearTimeout(el._t);el._t=setTimeout(()=>el.className='',2600)}
 function setErr(id,msg){const e=$(id);if(e)e.innerHTML=msg?`<div class="al al-r">${msg}</div>`:''}
 
-/* Live sync */
+/* Live sync — 訂餐統計即時更新 */
 onValue(ref(db,'/'),snap=>{
   DB=snap.val()||{menus:{},admins:{},staff:{},orders:{}};
   const t=new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
@@ -353,33 +360,55 @@ function renderOrders(){
   const total=ords.reduce((s,o)=>s+o.qty,0);
   const done=ords.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
   const people=new Set(ords.map(o=>o.emp)).size;
-  const menu=DB.menus&&DB.menus[dateStr];
+  const menu=(DB.menus||{})[dateStr];
   $('ord-stats').innerHTML=`
     <div class="stat"><div class="stat-lbl">總訂份數</div><div class="stat-val">${total}</div></div>
     <div class="stat"><div class="stat-lbl">已領取</div><div class="stat-val c-g">${done}</div></div>
     <div class="stat"><div class="stat-lbl">未領取</div><div class="stat-val c-r">${total-done}</div></div>
     <div class="stat"><div class="stat-lbl">訂餐人數</div><div class="stat-val c-a">${people}</div></div>`;
-  const COMBOS=[{k:'main1-white',l:'主菜一＋白飯'},{k:'main1-health',l:'主菜一＋養生飯'},{k:'main2-white',l:'主菜二＋白飯'},{k:'main2-health',l:'主菜二＋養生飯'},{k:'veg-white',l:'素食＋白飯'},{k:'veg-health',l:'素食＋養生飯'},{k:'dinner-white',l:'晚餐＋白飯'},{k:'dinner-health',l:'晚餐＋養生飯'}];
+
+  /* 份數彙總 — 依 dish key 分組，顯示實際菜名 */
+  const DISH_KEYS=['main1','main2','veg','dinnerMain1','dinnerMain2','dinnerVeg'];
   let sb='';
-  COMBOS.forEach(c=>{
-    const [d,r]=c.k.split('-');
-    const rows=ords.filter(o=>o.dish===d&&o.rice===r);
-    const t=rows.reduce((s,o)=>s+o.qty,0);if(!t)return;
-    const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
-    sb+=`<tr><td>${c.l}</td><td style="text-align:center">${t}</td><td style="text-align:center;color:var(--pri-l);font-weight:600">${dn}</td><td style="text-align:center;color:${t-dn>0?'var(--red)':'inherit'};font-weight:${t-dn>0?'700':'400'}">${t-dn}</td></tr>`;
+  DISH_KEYS.forEach(dk=>{
+    ['white','health'].forEach(r=>{
+      const rows=ords.filter(o=>o.dish===dk&&o.rice===r);
+      const t=rows.reduce((s,o)=>s+o.qty,0); if(!t) return;
+      const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
+      const nm=rows[0]?.dishName||dishName(dk,menu);
+      sb+=`<tr>
+        <td>${dishLbl(dk)}</td>
+        <td style="text-align:left;font-weight:600">${nm}</td>
+        <td>${riceLbl(r)}</td>
+        <td style="text-align:center">${t}</td>
+        <td style="text-align:center;color:var(--pri-l);font-weight:600">${dn}</td>
+        <td style="text-align:center;color:${t-dn>0?'var(--red)':'inherit'};font-weight:${t-dn>0?'700':'400'}">${t-dn}</td>
+      </tr>`;
+    });
   });
-  $('sum-tbody').innerHTML=sb||'<tr><td colspan="4" class="no-data">此日期無訂單</td></tr>';
+  $('sum-tbody').innerHTML=sb||'<tr><td colspan="6" class="no-data">此日期無訂單</td></tr>';
+
+  /* 訂單明細 */
   let ob='';
   ords.forEach(o=>{
-    const mname=menu?menu[o.dish]||o.dish:o.dish;
-    ob+=`<tr><td>${o.emp}</td><td>${o.name}</td><td>${o.dept}</td><td>${fmtD(o.date)}</td><td>${o.mealType==='lunch'?'午餐':'晚餐'}</td><td>${locLbl(o.loc)}</td><td>${dishLbl(o.dish)}</td><td>${riceLbl(o.rice)}</td><td style="text-align:center">${o.qty}</td>
-    <td><span class="badge ${o.status==='done'?'bdg-g':'bdg-a'}">${o.status==='done'?'已領取':'待領取'}</span></td>
-    <td><div class="acts">
-      <button class="btn ${o.status==='done'?'btn-o':'btn-g'}" onclick="toggleOrd('${o.id}')">${o.status==='done'?'取消':'標記領取'}</button>
-      <button class="btn btn-r" onclick="delOrd('${o.id}')">刪</button>
-    </div></td></tr>`;
+    const nm=o.dishName||dishName(o.dish,menu);
+    ob+=`<tr>
+      <td>${o.emp}</td><td>${o.name}</td><td>${o.dept}</td>
+      <td>${fmtD(o.date)}</td>
+      <td>${o.mealType==='lunch'?'午餐':'晚餐'}</td>
+      <td>${locLbl(o.loc)}</td>
+      <td>${dishLbl(o.dish)}</td>
+      <td style="font-weight:600">${nm}</td>
+      <td>${riceLbl(o.rice)}</td>
+      <td style="text-align:center">${o.qty}</td>
+      <td><span class="badge ${o.status==='done'?'bdg-g':'bdg-a'}">${o.status==='done'?'已領取':'待領取'}</span></td>
+      <td><div class="acts">
+        <button class="btn ${o.status==='done'?'btn-o':'btn-g'}" onclick="toggleOrd('${o.id}')">${o.status==='done'?'取消':'標記領取'}</button>
+        <button class="btn btn-r" onclick="delOrd('${o.id}')">刪</button>
+      </div></td>
+    </tr>`;
   });
-  $('ord-tbody').innerHTML=ob||'<tr><td colspan="11" class="no-data">此日期無訂單</td></tr>';
+  $('ord-tbody').innerHTML=ob||'<tr><td colspan="12" class="no-data">此日期無訂單</td></tr>';
 }
 
 async function toggleOrd(id){
@@ -408,31 +437,35 @@ function renderMenuTable(){
   const menus=DB.menus||{};
   const keys=Object.keys(menus).sort();
   const countEl=$('menu-count-label');
-  if(countEl) countEl.textContent='共 '+keys.length+' 筆（Firebase 即時同步）';
-  if(!keys.length){$('menu-tbody').innerHTML='<tr><td colspan="6" class="no-data">尚無菜單，請新增或匯入 CSV</td></tr>';return;}
+  if(countEl) countEl.textContent='共 '+keys.length+' 筆';
+  if(!keys.length){$('menu-tbody').innerHTML='<tr><td colspan="8" class="no-data">尚無菜單，請新增或匯入 CSV</td></tr>';return;}
+  const today=new Date().toISOString().slice(0,10);
   $('menu-tbody').innerHTML=keys.map(d=>{
     const m=menus[d];
-    const isPast=d<new Date().toISOString().slice(0,10);
+    const isPast=d<today;
     return `<tr style="${isPast?'opacity:.5':''}">
-      <td><b>${fmtD(d)}</b>${isPast?'<span style="font-size:11px;color:var(--g400);margin-left:4px">已過期</span>':''}</td>
-      <td>${m.main1||'—'}</td><td>${m.main2||'—'}</td><td>${m.veg||'—'}</td><td>${m.dinner||'—'}</td>
-      <td><button class="btn btn-r" onclick="delMenu('${d}')">刪除</button></td></tr>`;
+      <td><b>${fmtD(d)}</b>${isPast?'<small style="color:var(--g400);margin-left:4px">過期</small>':''}</td>
+      <td>${m.main1||'—'}</td><td>${m.main2||'—'}</td><td>${m.veg||'—'}</td>
+      <td>${m.dinnerMain1||m.dinner||'—'}</td><td>${m.dinnerMain2||'—'}</td><td>${m.dinnerVeg||'—'}</td>
+      <td><button class="btn btn-r" onclick="delMenu('${d}')">刪除</button></td>
+    </tr>`;
   }).join('');
 }
 
 async function addMenu(){
-  const date=$('m-date').value,m1=$('m-m1').value.trim(),m2=$('m-m2').value.trim(),veg=$('m-veg').value.trim(),din=$('m-din').value.trim();
-  if(!date||!m1||!m2||!veg){toast('請填寫日期及三種主菜（素食必填）','tr');return;}
-  const menuData={main1:m1,main2:m2,veg,dinner:din,main1Limit:80,holiday:false};
+  const date=$('m-date').value;
+  const m1=$('m-m1').value.trim(),m2=$('m-m2').value.trim(),veg=$('m-veg').value.trim();
+  const dm1=$('m-dm1').value.trim(),dm2=$('m-dm2').value.trim(),dveg=$('m-dveg').value.trim();
+  if(!date||!m1||!m2||!veg){toast('請填寫日期及午餐三種主菜','tr');return;}
+  const menuData={main1:m1,main2:m2,veg,main1Limit:80,holiday:false,
+    dinnerMain1:dm1,dinnerMain2:dm2,dinnerVeg:dveg};
   try{
     await set(ref(db,'menus/'+date),menuData);
-    toast('✅ 菜單已寫入 Firebase，訂餐頁面即時同步！','tg');
-    ['m-date','m-m1','m-m2','m-veg','m-din'].forEach(id=>{const e=$(id);if(e)e.value='';});
+    toast('✅ 菜單已寫入 Firebase！','tg');
+    ['m-date','m-m1','m-m2','m-veg','m-dm1','m-dm2','m-dveg'].forEach(id=>{const e=$(id);if(e)e.value='';});
     const badge=$('menu-firebase-status');
     if(badge){badge.style.display='inline-block';setTimeout(()=>badge.style.display='none',3000);}
-  }catch(err){
-    toast('❌ 寫入失敗：'+err.message,'tr');
-  }
+  }catch(err){ toast('❌ 寫入失敗：'+err.message,'tr'); }
 }
 async function delMenu(date){if(!confirm('確定刪除 '+fmtD(date)+' 的菜單？'))return;await remove(ref(db,'menus/'+date));toast('已刪除','tg');}
 async function clearAllMenus(){if(!confirm('確定刪除全部菜單？此操作會清空 Firebase 中所有菜單'))return;await set(ref(db,'menus'),{});toast('已清空所有菜單','tg');}

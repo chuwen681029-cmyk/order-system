@@ -32,10 +32,16 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 .fc{width:100%;padding:10px 13px;border:1.5px solid var(--gray-200);border-radius:9px;font-size:14px;font-family:inherit;background:#fff;color:var(--gray-800);outline:none;appearance:none;-webkit-appearance:none;transition:border-color .18s}
 .fc:focus{border-color:var(--green)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* 餐別分隔標題 */
+.meal-section-hd{font-size:13px;font-weight:700;color:#fff;background:var(--green);padding:7px 12px;border-radius:8px;margin:12px 0 8px;display:flex;align-items:center;gap:6px}
+.meal-section-hd.dinner{background:#7c3aed}
+
 .mi{border:2px solid var(--gray-200);border-radius:11px;padding:12px;margin-bottom:8px;transition:all .15s}
 .mi.sel{border-color:var(--green);background:var(--green-pale)}
 .mi.sold{opacity:.38;pointer-events:none}
 .mi-name{font-size:14px;font-weight:700;color:var(--gray-800);margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mi-sub{font-size:12px;color:var(--gray-600);font-weight:400}
 .sold-tag{background:var(--red-bg);color:var(--red);font-size:11px;padding:2px 7px;border-radius:999px;font-weight:700}
 .limit-tag{background:#fef9c3;color:#854d0e;font-size:11px;padding:2px 7px;border-radius:999px;font-weight:600}
 .qty-row{display:flex;align-items:center;gap:10px}
@@ -62,7 +68,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 .al{padding:10px 13px;border-radius:9px;font-size:13px;display:flex;gap:8px;line-height:1.5;align-items:flex-start}
 .al-r{background:var(--red-bg);border:1px solid #fca5a5;color:#7f1d1d}
 .al-y{background:#fef9c3;border:1px solid #fde68a;color:#713f12}
-.al-g{background:var(--green-bg);border:1px solid #86efac;color:#14532d}
 .suc{text-align:center;padding:20px 10px}
 .suc-ico{font-size:52px;margin-bottom:10px}
 .suc-t{font-size:18px;font-weight:700;margin-bottom:8px}
@@ -102,7 +107,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 
   <div id="pnl-login" class="pnl on">
     <div class="row"><div class="av">🤖</div>
-      <div class="bub">👋 歡迎使用<b>實習生訂餐系統</b>！<br>請輸入員編登入。<br><small style="opacity:.7">格式：V0XXXX 或 Y0XXXX</small></div>
+      <div class="bub">👋 歡迎使用<b>實習生訂餐系統</b>！請輸入員編登入。<br><small style="opacity:.7">格式：V0XXXX 或 Y0XXXX</small></div>
     </div>
     <div class="card">
       <div class="card-hd">🔑 員編登入</div>
@@ -121,7 +126,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 
   <div id="pnl-register" class="pnl">
     <div class="row"><div class="av">🤖</div>
-      <div class="bub">請填寫基本資料，完成後下次直接用員編登入即可。</div>
+      <div class="bub">請填寫基本資料，完成後下次直接用員編登入。</div>
     </div>
     <div class="card">
       <div class="card-hd">📝 填寫個人資料</div>
@@ -142,14 +147,24 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 
   <div id="pnl-s1" class="pnl">
     <div class="steps"><div class="sd on"></div><div class="sd"></div><div class="sd"></div></div>
-    <div class="row"><div class="av">🤖</div><div class="bub">請選擇<b>日期</b>、餐別與地點：</div></div>
+    <div class="row"><div class="av">🤖</div><div class="bub">請選擇<b>日期</b>、餐別與取餐地點：</div></div>
     <div class="card">
       <div class="card-hd">📅 步驟 1 — 基本設定</div>
       <div class="card-bd fl">
-        <div><div class="lbl">取餐日期（僅顯示今日及未來日期）</div><select class="fc" id="sel-date"></select></div>
+        <div><div class="lbl">取餐日期</div><select class="fc" id="sel-date"></select></div>
         <div class="row2">
-          <div><div class="lbl">餐別</div><select class="fc" id="sel-type"><option value="lunch">午餐</option><option value="dinner">晚餐</option></select></div>
-          <div><div class="lbl">取餐地點</div><select class="fc" id="sel-loc"><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select></div>
+          <div><div class="lbl">餐別</div>
+            <select class="fc" id="sel-type">
+              <option value="lunch">午餐</option>
+              <option value="dinner">晚餐</option>
+            </select>
+          </div>
+          <div><div class="lbl">取餐地點</div>
+            <select class="fc" id="sel-loc">
+              <option value="douliou">斗六院區</option>
+              <option value="huwei">虎尾院區</option>
+            </select>
+          </div>
         </div>
         <div id="s1-msg"></div>
         <button class="btn btn-g" onclick="goS2()">下一步：選擇餐點 →</button>
@@ -159,9 +174,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 
   <div id="pnl-s2" class="pnl">
     <div class="steps"><div class="sd on"></div><div class="sd on"></div><div class="sd"></div></div>
-    <div class="row"><div class="av">🤖</div><div class="bub">以下 6 種餐盒皆可點選數量：</div></div>
+    <div class="row"><div class="av">🤖</div><div class="bub" id="s2-hint">請選擇餐點及份數：</div></div>
     <div class="card">
-      <div class="card-hd">🍽️ 步驟 2 — 選擇餐點</div>
+      <div class="card-hd" id="s2-hd">🍽️ 步驟 2 — 選擇餐點</div>
       <div class="card-bd">
         <div id="meal-list"></div>
         <div class="cart">
@@ -217,13 +232,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 </div>
 </div>
 
-<!-- 載入中遮罩 -->
 <div id="loading-overlay" class="loading-overlay">
   <div class="loading-spinner"></div>
   <div style="font-size:14px;color:#4b5563;font-family:sans-serif">連線中，請稍候...</div>
 </div>
 
-<!-- 今日已訂通知 Modal -->
 <div id="today-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
     <div class="modal-title">📋 您今日已有訂餐</div>
@@ -238,7 +251,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update, get, push } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDhIzxK291vy2HpbJSMBXK7-eI5RFeusvw",
@@ -250,27 +263,10 @@ const firebaseConfig = {
   appId: "1:605808046207:web:970ff25e7be3cfcfb24f4a"
 };
 
-const SEED_MENUS = {
-  "2026-04-17":{main1:"脆瓜蒸爐魚",main2:"雞米花",veg:"味噌醬燒黑豆干",dinner:"法式烤雞腿",main1Limit:80},
-  "2026-04-18":{main1:"鹽烤鯖魚",main2:"鐵路排骨",veg:"翡翠豆腐",dinner:"烤雞翅",main1Limit:80},
-  "2026-04-19":{main1:"蘑菇豬柳",main2:"蜜汁翅腿",veg:"麻油燉豆腸",dinner:"蜜汁梅花肉排",main1Limit:80},
-  "2026-04-21":{main1:"椒鹽豬柳",main2:"酒釀雞腿",veg:"紅燒豆皮結",dinner:"栗子燒肉",main1Limit:80}
-};
-
-const SEED_ADMINS = {
-  "Y00780":{emp:"Y00780",dept:"復健部",name:"黃秋雯",role:"super"},
-  "Y01533":{emp:"Y01533",dept:"護理部",name:"郭珮君",role:"menu"},
-  "Y04315":{emp:"Y04315",dept:"影像醫學部",name:"陳嘉雯",role:"menu"},
-  "Y05763":{emp:"Y05763",dept:"營養室",name:"黃瓊慧",role:"menu"},
-  "Y09250":{emp:"Y09250",dept:"營養室",name:"林宥蓁",role:"menu"},
-  "V00001":{emp:"V00001",dept:"管理員",name:"林霈捷",role:"super"},
-  "V00002":{emp:"V00002",dept:"管理員",name:"彭家慶",role:"super"}
-};
-
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const db  = getDatabase(app);
 
-let DB = { menus:{}, admins:{}, staff:{}, orders:{} };
+let DB = {menus:{},admins:{},staff:{},orders:{}};
 let currentUser = null;
 let cart = [];
 let orderForm = {};
@@ -278,11 +274,21 @@ let dbReady = false;
 
 const $ = id => document.getElementById(id);
 function uid(){ return 'o'+Date.now()+Math.random().toString(36).slice(2,6); }
-function dishLbl(d){ return {main1:'主菜一',main2:'主菜二',veg:'素食',dinner:'晚餐'}[d]||d; }
+
+/* ── 共用標籤函式 ── */
+function dishLbl(d){
+  return {main1:'主菜一',main2:'主菜二',veg:'素食',
+          dinnerMain1:'晚餐主菜一',dinnerMain2:'晚餐主菜二',dinnerVeg:'晚餐素食'}[d]||d;
+}
+function dishName(d, menu){
+  if(!menu) return dishLbl(d);
+  return menu[d] || dishLbl(d);
+}
+function dishFull(d, menu){ return dishLbl(d)+'：'+dishName(d,menu); }
 function riceLbl(r){ return r==='white'?'白飯':'養生飯'; }
-function locLbl(l){ return l==='douliou'?'斗六院區':'虎尾院區'; }
+function locLbl(l) { return l==='douliou'?'斗六院區':'虎尾院區'; }
 function typeLbl(t){ return t==='lunch'?'午餐':'晚餐'; }
-function fmtD(d){ return d?d.replace(/-/g,'/'):''; }
+function fmtD(d)   { return d?d.replace(/-/g,'/'):''; }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 
 function isClosed(dateStr){
@@ -291,86 +297,58 @@ function isClosed(dateStr){
   if(dateStr===today) return new Date()>=new Date(dateStr+'T09:00:00');
   return false;
 }
-
-function getMenu(d){ return DB.menus&&DB.menus[d]; }
-
-function main1Count(dateStr){
-  return Object.values(DB.orders||{}).filter(o=>o.date===dateStr&&o.dish==='main1').reduce((s,o)=>s+o.qty,0);
+function getMenu(d){ return (DB.menus||{})[d]; }
+function main1Count(dateStr,dishKey){
+  return Object.values(DB.orders||{}).filter(o=>o.date===dateStr&&o.dish===dishKey).reduce((s,o)=>s+o.qty,0);
 }
-
 function effectiveDate(){
   const today=todayISO();
   const keys=Object.keys(DB.menus||{}).sort();
   if(keys.includes(today)) return today;
-  const future=keys.find(k=>k>today);
-  return future||keys[keys.length-1]||today;
+  return keys.find(k=>k>today)||keys[keys.length-1]||today;
 }
-
 function showOnly(id){
   ['pnl-login','pnl-register','pnl-home','pnl-s1','pnl-s2','pnl-s3','pnl-ok','pnl-pickup']
     .forEach(p=>{ const el=$(p); if(el) el.className='pnl'+(p===id?' on':''); });
   $('chat').scrollTo(0,0);
 }
-
 function toast(msg,type='g'){
   const el=document.createElement('div');
   el.style.cssText=`position:fixed;bottom:82px;left:50%;transform:translateX(-50%);background:${type==='r'?'#dc2626':'#06C755'};color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:999;white-space:nowrap`;
   el.textContent=msg; document.body.appendChild(el);
   setTimeout(()=>el.remove(),2600);
 }
-
 function setErr(id,msg){ const e=$(id); if(e) e.innerHTML=msg?`<div class="al al-r">${msg}</div>`:''; }
 function setMsg(id,msg,tp='y'){ const e=$(id); if(e) e.innerHTML=msg?`<div class="al al-${tp}">${msg}</div>`:''; }
 function closeModal(){ $('today-modal').style.display='none'; }
 
-/* ── Firebase operations ── */
-function fbSet(path,val){ return set(ref(db,path),val); }
-function fbUpdate(updates){ return update(ref(db,'/'),updates); }
+/* ── Firebase ── */
+onValue(ref(db,'/'),snap=>{
+  DB=snap.val()||{menus:{},admins:{},staff:{},orders:{}};
+  if(!dbReady){
+    dbReady=true;
+    $('loading-overlay').style.display='none';
+    $('bar-sub').textContent='已連線 — 跨裝置同步';
+  }
+  const active=document.querySelector('.pnl.on');
+  if(active){
+    const id=active.id;
+    if(id==='pnl-s1') populateDateSelect();
+    if(id==='pnl-s2') renderMealList();
+    if(id==='pnl-pickup') renderMyPickup();
+  }
+});
 
-/* ── Init ── */
-async function initDB(){
-  // Seed menus & admins if empty
-  const snap = await get(ref(db,'/'));
-  const existing = snap.val()||{};
-  const updates = {};
-  if(!existing.menus) updates.menus = SEED_MENUS;
-  if(!existing.admins) updates.admins = SEED_ADMINS;
-  if(!existing.staff) updates.staff = {};
-  if(!existing.orders) updates.orders = {};
-  if(Object.keys(updates).length>0) await fbUpdate(updates);
-
-  // Listen for realtime changes
-  onValue(ref(db,'/'), snap=>{
-    DB = snap.val()||{menus:{},admins:{},staff:{},orders:{}};
-    if(!dbReady){
-      dbReady=true;
-      $('loading-overlay').style.display='none';
-      $('bar-sub').textContent='已連線 — 跨裝置同步';
-    }
-    // Refresh current view
-    const active=document.querySelector('.pnl.on');
-    if(active){
-      const id=active.id;
-      if(id==='pnl-s1') populateDateSelect();
-      if(id==='pnl-s2') renderMealList();
-      if(id==='pnl-pickup') renderMyPickup();
-    }
-  });
-}
+async function fbSet(path,val){ await set(ref(db,path),val); }
+async function fbUpdate(updates){ await update(ref(db,'/'),updates); }
 
 /* ── Auth ── */
 function doLogin(){
   const emp=$('inp-emp').value.trim().toUpperCase();
   if(!emp){ setErr('login-err','請輸入員編'); return; }
   const user=(DB.staff||{})[emp]||(DB.admins||{})[emp];
-  if(!user){
-    $('reg-emp').value=emp;
-    setErr('login-err','');
-    showOnly('pnl-register');
-    return;
-  }
-  currentUser=user;
-  afterLogin();
+  if(!user){ $('reg-emp').value=emp; setErr('login-err',''); showOnly('pnl-register'); return; }
+  currentUser=user; afterLogin();
 }
 
 function afterLogin(){
@@ -392,8 +370,8 @@ function showTodayModal(orders,dateStr){
   });
   let html='';
   Object.values(merged).forEach(o=>{
-    const dn=menu&&menu[o.dish]?menu[o.dish]:dishLbl(o.dish);
-    html+=`<div class="modal-item"><span>${typeLbl(o.mealType)}｜${dishLbl(o.dish)}：${dn}（${riceLbl(o.rice)}）</span><span style="font-weight:700;flex-shrink:0;margin-left:8px">${o.qty} 份</span></div>`;
+    const full=dishFull(o.dish,menu);
+    html+=`<div class="modal-item"><span>${typeLbl(o.mealType)}｜${full}（${riceLbl(o.rice)}）</span><span style="font-weight:700;margin-left:8px;flex-shrink:0">${o.qty} 份</span></div>`;
   });
   $('modal-date-label').textContent='日期：'+fmtD(dateStr);
   $('modal-items').innerHTML=html;
@@ -424,30 +402,26 @@ async function doRegister(){
   if(!emp){ setErr('reg-err','請輸入員編'); return; }
   if(!name){ setErr('reg-err','請輸入姓名'); return; }
   if(!dept){ setErr('reg-err','請輸入單位'); return; }
-  const user={emp,dept,name};
-  await fbSet('staff/'+emp, user);
-  currentUser=user;
+  await fbSet('staff/'+emp,{emp,dept,name});
+  currentUser={emp,dept,name};
   toast('資料已建立，歡迎 '+name+'！');
   afterLogin();
 }
 
-/* ── Order flow ── */
+/* ── Order ── */
 function showOrder(){
   if(!currentUser){ toast('請先登入','r'); showOnly('pnl-login'); return; }
-  populateDateSelect();
-  setMsg('s1-msg','');
-  showOnly('pnl-s1');
+  populateDateSelect(); setMsg('s1-msg',''); showOnly('pnl-s1');
 }
 
 function populateDateSelect(){
   const sel=$('sel-date'); if(!sel) return;
   const cur=sel.value;
   sel.innerHTML='<option value="">請選擇日期</option>';
-  const menus=DB.menus||{};
   const today=todayISO();
-  Object.keys(menus).sort().forEach(d=>{
+  Object.keys(DB.menus||{}).sort().forEach(d=>{
     if(d<today) return;
-    const m=menus[d];
+    const m=DB.menus[d];
     const closed=isClosed(d);
     let label=fmtD(d);
     if(m.holiday) label+='（假日不供餐）';
@@ -472,7 +446,7 @@ function goS2(){
   const menu=getMenu(date);
   if(!menu){ setMsg('s1-msg','⚠️ 此日期無菜單','r'); return; }
   if(menu.holiday){ setMsg('s1-msg','⚠️ 此日為假日，不供餐','r'); return; }
-  if(isClosed(date)){ setMsg('s1-msg','🔒 本日訂餐已截止（每日 09:00 截止）','r'); return; }
+  if(isClosed(date)){ setMsg('s1-msg','🔒 本日訂餐已截止（09:00）','r'); return; }
   setMsg('s1-msg','');
   orderForm={date,mealType,loc,menu};
   cart=[];
@@ -484,37 +458,68 @@ function goS2(){
 function goS1(){ showOnly('pnl-s1'); }
 function goS3(){
   if(!cart.length){ toast('請先選擇至少一樣餐點','r'); return; }
-  renderConfirm();
-  showOnly('pnl-s3');
+  renderConfirm(); showOnly('pnl-s3');
 }
 
+/* ── 餐點清單：午餐3種＋晚餐3種，各×白飯/養生飯 ── */
 function renderMealList(){
   const {date,mealType,menu}=orderForm;
-  const m1count=main1Count(date);
-  const m1limit=menu.main1Limit||80;
-  const m1sold=m1count>=m1limit;
-  const bases=mealType==='dinner'
-    ?[{key:'dinner',name:menu.dinner||'晚餐'}]
-    :[{key:'main1',name:menu.main1,limit:m1limit,count:m1count,sold:m1sold},{key:'main2',name:menu.main2},{key:'veg',name:menu.veg}];
-  let html='';
-  bases.forEach(d=>{
+
+  /* 動態標題 */
+  $('s2-hd').textContent = mealType==='lunch'?'🌞 步驟 2 — 選擇午餐':'🌙 步驟 2 — 選擇晚餐';
+  $('s2-hint').textContent = mealType==='lunch'
+    ? '以下午餐三種主食，各可選白飯或養生飯：'
+    : '以下晚餐三種主食，各可選白飯或養生飯：';
+
+  /* 午餐 dish keys */
+  const lunchDishes = [
+    { key:'main1',      name:menu.main1||'主菜一',      limit:menu.main1Limit||80 },
+    { key:'main2',      name:menu.main2||'主菜二' },
+    { key:'veg',        name:menu.veg||'素食' },
+  ];
+  /* 晚餐 dish keys */
+  const dinnerDishes = [
+    { key:'dinnerMain1', name:menu.dinnerMain1||menu.dinner||'晚餐主菜一', limit:menu.dinnerMain1Limit||0 },
+    { key:'dinnerMain2', name:menu.dinnerMain2||'晚餐主菜二' },
+    { key:'dinnerVeg',   name:menu.dinnerVeg||'晚餐素食' },
+  ];
+
+  const dishes = mealType==='lunch' ? lunchDishes : dinnerDishes;
+  const sectionLabel = mealType==='lunch' ? '🌞 午餐' : '🌙 晚餐';
+
+  let html=`<div class="meal-section-hd ${mealType==='dinner'?'dinner':''}">${sectionLabel}</div>`;
+
+  dishes.forEach(d=>{
+    const m1count = d.limit ? main1Count(date,d.key) : 0;
+    const sold = d.limit>0 && m1count>=d.limit;
+
     ['white','health'].forEach(riceType=>{
       const rk=d.key+'-'+riceType;
       const ci=cart.find(c=>c.dish===d.key&&c.rice===riceType);
       const qty=ci?ci.qty:0;
       const rn=riceType==='white'?'白飯':'養生飯';
-      const isSold=d.sold===true;
+      const isSold=sold;
       const soldTag=isSold?'<span class="sold-tag">已售完</span>':'';
-      const limitTag=(d.limit&&!isSold)?`<span class="limit-tag">限${d.limit}份，已訂${d.count}</span>`:'';
-      html+=`<div class="mi ${qty>0?'sel':''} ${isSold?'sold':''}" id="mi-${rk}">
-        <div class="mi-name"><span>${d.name}＋${rn}</span>${soldTag}${limitTag}</div>
-        <div class="qty-row"><span class="ql">份數：</span>
-          <button class="qb" onclick="chgQty('${d.key}','${riceType}',-1,'${d.name}＋${rn}')">−</button>
+      const limitTag=(d.limit>0&&!isSold)?`<span class="limit-tag">限${d.limit}份，已訂${m1count}</span>`:'';
+      const cartName=`${dishLbl(d.key)}：${d.name}＋${rn}`;
+
+      html+=`
+      <div class="mi ${qty>0?'sel':''} ${isSold?'sold':''}" id="mi-${rk}">
+        <div class="mi-name">
+          <span>${d.name}＋${rn}</span>
+          ${soldTag}${limitTag}
+        </div>
+        <div class="mi-sub">${dishLbl(d.key)}</div>
+        <div class="qty-row" style="margin-top:8px">
+          <span class="ql">份數：</span>
+          <button class="qb" onclick="chgQty('${d.key}','${riceType}',-1,'${cartName}')">−</button>
           <span class="qn" id="qn-${rk}">${qty}</span>
-          <button class="qb" onclick="chgQty('${d.key}','${riceType}',1,'${d.name}＋${rn}')">＋</button>
-        </div></div>`;
+          <button class="qb" onclick="chgQty('${d.key}','${riceType}',1,'${cartName}')">＋</button>
+        </div>
+      </div>`;
     });
   });
+
   $('meal-list').innerHTML=html;
 }
 
@@ -548,8 +553,14 @@ async function submitOrder(){
   const {date,mealType,loc}=orderForm;
   const updates={};
   cart.forEach(c=>{
-    const id=uid();
-    updates['orders/'+id]={id,emp:currentUser.emp,name:currentUser.name||currentUser.emp,dept:currentUser.dept||'實習生',date,mealType,loc,dish:c.dish,rice:c.rice,qty:c.qty,status:'pending',ts:Date.now()};
+    const id='o'+Date.now()+Math.random().toString(36).slice(2,6);
+    updates['orders/'+id]={
+      id, emp:currentUser.emp, name:currentUser.name||currentUser.emp,
+      dept:currentUser.dept||'實習生', date, mealType, loc,
+      dish:c.dish, rice:c.rice, qty:c.qty,
+      dishName:c.name,  /* 儲存實際菜名方便取餐頁顯示 */
+      status:'pending', ts:Date.now()
+    };
   });
   await fbUpdate(updates);
   const items=cart.map(c=>`${c.name} × ${c.qty}`).join('<br>');
@@ -573,25 +584,33 @@ function renderMyPickup(){
   empty.style.display='none';
   const menu=getMenu(chkDate);
   const merged={};
-  myOrds.forEach(o=>{ const k=o.dish+'-'+o.rice; if(!merged[k]) merged[k]={...o}; else merged[k].qty+=o.qty; });
+  myOrds.forEach(o=>{
+    const k=o.dish+'-'+o.rice;
+    if(!merged[k]) merged[k]={...o}; else merged[k].qty+=o.qty;
+  });
   list.innerHTML=Object.values(merged).map(o=>{
-    const dn=menu&&menu[o.dish]?menu[o.dish]:dishLbl(o.dish);
-    return `<div class="pcard ${o.status==='done'?'done':''}">
-      <div class="pc-name">${dishLbl(o.dish)}：${dn}</div>
-      <div class="pc-items">${riceLbl(o.rice)} × ${o.qty} 份<br>📍 ${locLbl(o.loc)}　🍽️ ${typeLbl(o.mealType)}<br>📅 ${fmtD(o.date)}</div>
+    /* 優先用訂單內儲存的 dishName，次選 menu，最後用 dishLbl */
+    const nm=o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
+    return `
+    <div class="pcard ${o.status==='done'?'done':''}">
+      <div class="pc-name">${dishLbl(o.dish)}：${nm}</div>
+      <div class="pc-items">
+        ${riceLbl(o.rice)} × ${o.qty} 份<br>
+        📍 ${locLbl(o.loc)}　🍽️ ${typeLbl(o.mealType)}<br>
+        📅 ${fmtD(o.date)}
+      </div>
       <button class="btn ${o.status==='done'?'btn-gy':'btn-g'}" ${o.status==='done'?'disabled':''} onclick="doMyPickup('${o.id}')">
         ${o.status==='done'?'✅ 已領取':'🙋 確認領取'}
-      </button></div>`;
+      </button>
+    </div>`;
   }).join('');
 }
 
 async function doMyPickup(id){
-  await fbSet('orders/'+id+'/status','done');
+  await set(ref(db,'orders/'+id+'/status'),'done');
   toast('已確認領取！');
 }
 
-/* ── Boot ── */
-initDB();
 window.doLogin=doLogin; window.doLogout=doLogout;
 window.showRegister=showRegister; window.doRegister=doRegister;
 window.showOrder=showOrder; window.showPickup=showPickup;
