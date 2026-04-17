@@ -501,7 +501,7 @@ function renderMealList(){
       const isSold=sold;
       const soldTag=isSold?'<span class="sold-tag">已售完</span>':'';
       const limitTag=(d.limit>0&&!isSold)?`<span class="limit-tag">限${d.limit}份，已訂${m1count}</span>`:'';
-      const cartName=`${dishLbl(d.key)}：${d.name}＋${rn}`;
+      const cartName=`${d.name}＋${rn}`;
 
       html+=`
       <div class="mi ${qty>0?'sel':''} ${isSold?'sold':''}" id="mi-${rk}">
@@ -589,14 +589,14 @@ function renderMyPickup(){
     if(!merged[k]) merged[k]={...o}; else merged[k].qty+=o.qty;
   });
   list.innerHTML=Object.values(merged).map(o=>{
-    /* 優先用訂單內儲存的 dishName，次選 menu，最後用 dishLbl */
     const nm=o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
+    /* 取純菜名（去除可能含有的「主菜一：」前綴） */
+    const cleanName=nm.includes('：')?nm.split('：').slice(1).join('：'):nm;
     return `
     <div class="pcard ${o.status==='done'?'done':''}">
-      <div class="pc-name">${dishLbl(o.dish)}：${nm}</div>
+      <div class="pc-name">${cleanName}＋${riceLbl(o.rice)}</div>
       <div class="pc-items">
-        ${riceLbl(o.rice)} × ${o.qty} 份<br>
-        📍 ${locLbl(o.loc)}　🍽️ ${typeLbl(o.mealType)}<br>
+        ${o.qty} 份　📍 ${locLbl(o.loc)}　🍽️ ${typeLbl(o.mealType)}<br>
         📅 ${fmtD(o.date)}
       </div>
       <button class="btn ${o.status==='done'?'btn-gy':'btn-g'}" ${o.status==='done'?'disabled':''} onclick="doMyPickup('${o.id}')">

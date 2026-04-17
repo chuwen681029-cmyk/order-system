@@ -375,7 +375,9 @@ function renderOrders(){
       const rows=ords.filter(o=>o.dish===dk&&o.rice===r);
       const t=rows.reduce((s,o)=>s+o.qty,0); if(!t) return;
       const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
-      const nm=rows[0]?.dishName||dishName(dk,menu);
+      /* 純菜名：去除「主菜一：」等前綴 */
+      let nm=rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
+      if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
       sb+=`<tr>
         <td>${dishLbl(dk)}</td>
         <td style="text-align:left;font-weight:600">${nm}</td>
@@ -391,7 +393,8 @@ function renderOrders(){
   /* 訂單明細 */
   let ob='';
   ords.forEach(o=>{
-    const nm=o.dishName||dishName(o.dish,menu);
+    let nm=o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
+    if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
     ob+=`<tr>
       <td>${o.emp}</td><td>${o.name}</td><td>${o.dept}</td>
       <td>${fmtD(o.date)}</td>

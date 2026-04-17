@@ -257,7 +257,7 @@ function render(){
     <div class="stat"><div class="stat-lbl">未領取</div><div class="stat-val c-red">${total-done}</div></div>
     <div class="stat"><div class="stat-lbl">訂餐人數</div><div class="stat-val c-amber">${people}</div></div>`;
 
-  /* Summary table — 顯示實際菜名 */
+  /* Summary table — 只顯示菜名＋飯種 */
   const DISH_KEYS=['main1','main2','veg','dinnerMain1','dinnerMain2','dinnerVeg'];
   let sb='';
   DISH_KEYS.forEach(dk=>{
@@ -265,8 +265,9 @@ function render(){
       const rows=allOrds.filter(o=>o.dish===dk&&o.rice===r);
       const t=rows.reduce((s,o)=>s+o.qty,0);if(!t)return;
       const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
-      /* 菜名：先從訂單取 dishName，再從菜單取，最後用 dishLbl */
-      const nm=rows[0]?.dishName||dishName(dk,menu);
+      /* 純菜名：去除「主菜一：」等前綴 */
+      let nm=rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
+      if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
       sb+=`<tr>
         <td>${dishLbl(dk)}</td>
         <td style="text-align:left;font-weight:600;color:var(--g800)">${nm}</td>
@@ -310,13 +311,15 @@ function render(){
         if(!merged[k]) merged[k]={lbl:dishLbl(o.dish),nm:o.dishName||dishName(o.dish,menu),rice:riceLbl(o.rice),qty:0};
         merged[k].qty+=o.qty;
       });
-      const mealRows=Object.values(merged).map(m=>
-        `<div class="sc-meal-row">
-          <span class="sc-meal-lbl">${m.lbl}／${m.rice}</span>
-          <span class="sc-meal-name">${m.nm}</span>
+      const mealRows=Object.values(merged).map(m=>{
+        /* 純菜名：去除「主菜一：」等前綴 */
+        let nm=m.nm; if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
+        return `<div class="sc-meal-row">
+          <span class="sc-meal-lbl">${m.rice}</span>
+          <span class="sc-meal-name">${nm}</span>
           <span class="sc-meal-qty">× ${m.qty}</span>
-        </div>`
-      ).join('');
+        </div>`;
+      }).join('');
       const locs=[...new Set(u.items.map(o=>locLbl(o.loc)))].join('、');
       const types=[...new Set(u.items.map(o=>typeLbl(o.mealType)))].join('、');
       html+=`
