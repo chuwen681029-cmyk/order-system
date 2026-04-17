@@ -480,19 +480,34 @@ function importMenuCSV(input){
     importedMenus={};
     let count=0;
     lines.forEach((line,idx)=>{
-      if(idx===0&&(line.includes('日期')||line.includes('date'))) return; // skip header
-      // handle both comma and tab separated, and quoted fields
+      if(idx===0&&(line.includes('日期')||line.includes('date')||line.includes('主菜'))) return;
+      /* 支援有引號的欄位（Excel CSV 格式） */
       const cols=line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(c=>c.replace(/^"|"$/g,'').trim());
       if(cols.length<4) return;
-      const [rawDate,m1,m2,veg,...rest]=cols;
-      const dinner=rest[0]||'';
+      /* 7欄：日期, 主菜一, 主菜二, 素食, 晚餐主菜一, 晚餐主菜二, 晚餐素食 */
+      const rawDate=cols[0]||'';
+      const m1=cols[1]||'', m2=cols[2]||'', veg=cols[3]||'';
+      const dm1=cols[4]||'', dm2=cols[5]||'', dveg=cols[6]||'';
       if(!rawDate||!m1) return;
-      const dateKey=rawDate.replace(/\//g,'-').replace(/年|月/g,'-').replace(/日/g,'').trim();
+      /* 日期格式轉換：2026/04/20 或 2026-04-20 或 4月20日 */
+      let dateKey=rawDate
+        .replace(/\//g,'-')
+        .replace(/年/g,'-').replace(/月/g,'-').replace(/日/g,'')
+        .trim();
+      /* 若只有 月-日 格式（如 4-20），補上當年 */
+      if(/^\d{1,2}-\d{1,2}$/.test(dateKey)){
+        const yr=new Date().getFullYear();
+        const parts=dateKey.split('-');
+        dateKey=`${yr}-${parts[0].padStart(2,'0')}-${parts[1].padStart(2,'0')}`;
+      }
       if(!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
-      importedMenus[dateKey]={main1:m1,main2:m2,veg,dinner,main1Limit:80,holiday:false};
+      importedMenus[dateKey]={
+        main1:m1, main2:m2, veg:veg, main1Limit:80, holiday:false,
+        dinnerMain1:dm1, dinnerMain2:dm2, dinnerVeg:dveg
+      };
       count++;
     });
-    if(statusEl) statusEl.textContent='✅ 已讀取 '+count+' 筆，請點「寫入 Firebase」';
+    if(statusEl) statusEl.textContent='✅ 已讀取 '+count+' 筆（含晚餐三種），請點「寫入 Firebase」';
     toast('已讀取 '+count+' 筆菜單，請點「寫入 Firebase」','tg');
   };
   reader.readAsText(file,'UTF-8');input.value='';
