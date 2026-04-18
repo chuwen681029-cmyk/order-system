@@ -265,10 +265,11 @@ function render(){
       const rows=allOrds.filter(o=>o.dish===dk&&o.rice===r);
       const t=rows.reduce((s,o)=>s+o.qty,0);if(!t)return;
       const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
-      /* 純菜名：去除「＋養生飯/白飯」後綴、去除「主菜一：」等前綴 */
-      let nm=rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
-      nm=nm.replace(/＋(白飯|養生飯)$/,'');
-      if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
+      /* 優先從菜單直接取純菜名，再從 dishName 清理 */
+      let nm=(menu&&menu[dk])||rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
+      while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
+      if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
+      nm=nm.trim();
       sb+=`<tr>
         <td>${dishLbl(dk)}</td>
         <td style="text-align:left;font-weight:600;color:var(--g800)">${nm}</td>
@@ -309,14 +310,15 @@ function render(){
       const merged={};
       u.items.forEach(o=>{
         const k=o.dish+'-'+o.rice;
-        if(!merged[k]) merged[k]={lbl:dishLbl(o.dish),nm:o.dishName||dishName(o.dish,menu),rice:riceLbl(o.rice),qty:0};
+        if(!merged[k]) merged[k]={dk:o.dish,lbl:dishLbl(o.dish),nm:o.dishName||dishName(o.dish,menu),rice:riceLbl(o.rice),qty:0};
         merged[k].qty+=o.qty;
       });
       const mealRows=Object.values(merged).map(m=>{
-        /* 純菜名：去除「＋養生飯/白飯」後綴、去除「主菜一：」等前綴 */
-        let nm=m.nm||'';
-        nm=nm.replace(/＋(白飯|養生飯)$/,'');
-        if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
+        /* 優先從菜單直接取純菜名 */
+        let nm=(menu&&menu[m.dk])||m.nm||'';
+        while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
+        if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
+        nm=nm.trim();
         return `<div class="sc-meal-row">
           <span class="sc-meal-lbl">${m.rice}</span>
           <span class="sc-meal-name">${nm}</span>

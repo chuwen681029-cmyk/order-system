@@ -471,15 +471,15 @@ function renderMealList(){
     ? '以下午餐三種主食，各可選白飯或養生飯：'
     : '以下晚餐三種主食，各可選白飯或養生飯：';
 
-  /* 午餐 dish keys */
+  /* 午餐 dish keys — 主菜一不設份數上限 */
   const lunchDishes = [
-    { key:'main1',      name:menu.main1||'主菜一',      limit:menu.main1Limit||80 },
+    { key:'main1',      name:menu.main1||'主菜一' },
     { key:'main2',      name:menu.main2||'主菜二' },
     { key:'veg',        name:menu.veg||'素食' },
   ];
   /* 晚餐 dish keys */
   const dinnerDishes = [
-    { key:'dinnerMain1', name:menu.dinnerMain1||menu.dinner||'晚餐主菜一', limit:menu.dinnerMain1Limit||0 },
+    { key:'dinnerMain1', name:menu.dinnerMain1||menu.dinner||'晚餐主菜一' },
     { key:'dinnerMain2', name:menu.dinnerMain2||'晚餐主菜二' },
     { key:'dinnerVeg',   name:menu.dinnerVeg||'晚餐素食' },
   ];
@@ -490,27 +490,18 @@ function renderMealList(){
   let html=`<div class="meal-section-hd ${mealType==='dinner'?'dinner':''}">${sectionLabel}</div>`;
 
   dishes.forEach(d=>{
-    const m1count = d.limit ? main1Count(date,d.key) : 0;
-    const sold = d.limit>0 && m1count>=d.limit;
-
     ['white','health'].forEach(riceType=>{
       const rk=d.key+'-'+riceType;
       const ci=cart.find(c=>c.dish===d.key&&c.rice===riceType);
       const qty=ci?ci.qty:0;
       const rn=riceType==='white'?'白飯':'養生飯';
-      const isSold=sold;
-      const soldTag=isSold?'<span class="sold-tag">已售完</span>':'';
-      const limitTag=(d.limit>0&&!isSold)?`<span class="limit-tag">限${d.limit}份，已訂${m1count}</span>`:'';
       /* cartName 顯示用（含飯別），dishName 儲存用（純菜名，不含飯別） */
       const cartName=`${d.name}＋${rn}`;
       const pureName=d.name; /* 純菜名，存入 Firebase */
 
       html+=`
-      <div class="mi ${qty>0?'sel':''} ${isSold?'sold':''}" id="mi-${rk}">
-        <div class="mi-name">
-          <span>${d.name}＋${rn}</span>
-          ${soldTag}${limitTag}
-        </div>
+      <div class="mi ${qty>0?'sel':''}" id="mi-${rk}">
+        <div class="mi-name"><span>${d.name}＋${rn}</span></div>
         <div class="mi-sub">${dishLbl(d.key)}</div>
         <div class="qty-row" style="margin-top:8px">
           <span class="ql">份數：</span>
@@ -591,10 +582,13 @@ function renderMyPickup(){
     if(!merged[k]) merged[k]={...o}; else merged[k].qty+=o.qty;
   });
   list.innerHTML=Object.values(merged).map(o=>{
-    /* 取純菜名（去除飯別後綴，去除類別前綴） */
-    let nm=o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
-    nm=nm.replace(/＋(白飯|養生飯)$/,'');         /* 去除飯別後綴 */
-    if(nm.includes('：')) nm=nm.split('：').slice(1).join('：'); /* 去除類別前綴 */
+    /* 優先從菜單直接取純菜名，再從 dishName 清理 */
+    let nm = (menu && menu[o.dish]) || o.dishName || dishLbl(o.dish);
+    /* 反覆去除飯別後綴（處理舊資料多層疊加問題） */
+    while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
+    /* 去除「主菜一：」等類別前綴 */
+    if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
+    nm=nm.trim();
     const riceStr=riceLbl(o.rice);
     return `
     <div class="pcard ${o.status==='done'?'done':''}">

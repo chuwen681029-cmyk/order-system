@@ -375,10 +375,11 @@ function renderOrders(){
       const rows=ords.filter(o=>o.dish===dk&&o.rice===r);
       const t=rows.reduce((s,o)=>s+o.qty,0); if(!t) return;
       const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
-      /* 純菜名：去除「＋養生飯/白飯」後綴、去除「主菜一：」等前綴 */
-      let nm=rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
-      nm=nm.replace(/＋(白飯|養生飯)$/,'');
-      if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
+      /* 優先從菜單直接取純菜名，再從 dishName 清理 */
+      let nm=(menu&&menu[dk])||rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
+      while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
+      if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
+      nm=nm.trim();
       sb+=`<tr>
         <td>${dishLbl(dk)}</td>
         <td style="text-align:left;font-weight:600">${nm}</td>
@@ -394,9 +395,10 @@ function renderOrders(){
   /* 訂單明細 */
   let ob='';
   ords.forEach(o=>{
-    let nm=o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
-    nm=nm.replace(/＋(白飯|養生飯)$/,'');
-    if(nm.includes('：')) nm=nm.split('：').slice(1).join('：');
+    let nm=(menu&&menu[o.dish])||o.dishName||dishName(o.dish,menu)||dishLbl(o.dish);
+    while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
+    if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
+    nm=nm.trim();
     ob+=`<tr>
       <td>${o.emp}</td><td>${o.name}</td><td>${o.dept}</td>
       <td>${fmtD(o.date)}</td>
