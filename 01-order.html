@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>🍱 實習生訂餐</title>
+<title>🍱 院餐訂餐系統</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -114,7 +114,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
 <body>
 <div class="shell">
 <div class="top-bar">
-  <div><div class="top-title">🍱 實習生訂餐系統</div><div class="top-sub" id="bar-sub">連線中...</div></div>
+  <div><div class="top-title">🍱 院餐訂餐系統</div><div class="top-sub" id="bar-sub">連線中...</div></div>
   <button class="top-logout" id="logout-btn" onclick="doLogout()" style="display:none">登出</button>
 </div>
 <div class="chat" id="chat">
@@ -122,7 +122,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
   <!-- 步驟0：選擇身分 -->
   <div id="pnl-identity" class="pnl on">
     <div class="row"><div class="av">🤖</div>
-      <div class="bub">👋 歡迎使用<b>實習生訂餐系統</b>！<br>請選擇您的身分：</div>
+      <div class="bub">👋 歡迎使用<b>院餐訂餐系統</b>！<br>請選擇您的身分：</div>
     </div>
     <div class="card">
       <div class="card-hd">🏥 選擇部門</div>
@@ -182,23 +182,21 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
     </div>
   </div>
 
-  <!-- 社工室：志工姓名登入 -->
+  <!-- 社工室：志工姓名登入（直接輸入，不需符合名單） -->
   <div id="pnl-social-login" class="pnl">
     <div class="row"><div class="av">🤖</div>
-      <div class="bub">🤝 <b>社工室志工</b>登入<br><small style="opacity:.7">請從名單中選擇您的姓名</small></div>
+      <div class="bub">🤝 <b>社工室志工</b>登入<br><small style="opacity:.7">請輸入您的姓名即可登入</small></div>
     </div>
     <div class="card">
-      <div class="card-hd purple">🤝 志工名單登入</div>
+      <div class="card-hd purple">🤝 志工登入</div>
       <div class="card-bd fl">
         <div>
-          <div class="lbl">搜尋姓名（可輸入關鍵字篩選）</div>
-          <input class="fc" id="social-search" placeholder="輸入姓名關鍵字..." oninput="filterSocialList()">
-        </div>
-        <div class="name-list" id="social-name-list">
-          <div style="text-align:center;color:var(--gray-400);font-size:13px;padding:16px">載入志工名單中...</div>
+          <div class="lbl">姓名</div>
+          <input class="fc" id="social-name-input" placeholder="請輸入您的姓名" maxlength="20"
+            onkeydown="if(event.key==='Enter')doSocialLogin()">
         </div>
         <div id="social-login-err"></div>
-        <button class="btn btn-g" style="background:var(--purple)" onclick="doSocialLogin()">以此身分登入 →</button>
+        <button class="btn btn-g" style="background:var(--purple)" onclick="doSocialLogin()">登入 →</button>
         <button class="btn btn-gy" onclick="showOnly('pnl-identity')">← 返回</button>
       </div>
     </div>
@@ -385,9 +383,10 @@ function selectIdentity(type){
     showOnly('pnl-login');
     setTimeout(()=>$('inp-emp')&&$('inp-emp').focus(),100);
   } else {
-    renderSocialList();
-    selectedSocialName=null;
+    setErr('social-login-err','');
+    if($('social-name-input')) $('social-name-input').value='';
     showOnly('pnl-social-login');
+    setTimeout(()=>$('social-name-input')&&$('social-name-input').focus(),100);
   }
 }
 
@@ -401,42 +400,19 @@ function doLogin(){
   afterLogin();
 }
 
-/* ── 社工室志工登入 ── */
-function renderSocialList(){
-  const list=$('social-name-list'); if(!list) return;
-  const keyword=($('social-search')||{}).value||'';
-  const volunteers=Object.values(DB.social_staff||{});
-  if(!volunteers.length){
-    list.innerHTML='<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:16px">目前尚未設定志工名單，請聯絡社工室管理員</div>';
-    return;
-  }
-  const filtered=keyword?volunteers.filter(v=>v.name&&v.name.includes(keyword)):volunteers;
-  if(!filtered.length){
-    list.innerHTML='<div style="text-align:center;color:var(--gray-400);font-size:13px;padding:16px">查無符合姓名</div>';
-    return;
-  }
-  list.innerHTML=filtered.map(v=>`
-    <div class="name-item ${selectedSocialName===v.name?'sel':''}" onclick="pickSocialName('${v.name}')">
-      <span>${v.name}</span>
-      ${selectedSocialName===v.name?'<span style="color:var(--purple);font-size:18px">✓</span>':''}
-    </div>`).join('');
-}
-
-function filterSocialList(){ renderSocialList(); }
-
-function pickSocialName(name){
-  selectedSocialName=name;
-  renderSocialList();
-}
+/* ── 社工室志工登入（直接輸入姓名，不驗名單） ── */
+function renderSocialList(){ /* 不再使用名單，保留空函式供相容 */ }
+function filterSocialList(){ }
+function pickSocialName(name){ }
 
 function doSocialLogin(){
-  if(!selectedSocialName){ setErr('social-login-err','請先選擇您的姓名'); return; }
-  const vol=Object.values(DB.social_staff||{}).find(v=>v.name===selectedSocialName);
-  if(!vol){ setErr('social-login-err','查無此志工，請聯絡社工室管理員'); return; }
+  const nameEl=$('social-name-input');
+  const name=nameEl?nameEl.value.trim():'';
+  if(!name){ setErr('social-login-err','請輸入您的姓名'); return; }
+  const id='social_'+name;
   currentUser={
-    id: vol.id||('social_'+selectedSocialName),
-    emp: vol.id||('social_'+selectedSocialName),
-    name: vol.name,
+    id, emp: id,
+    name,
     dept: '社工室',
     deptType: 'social'
   };
@@ -477,8 +453,8 @@ function doLogout(){
   $('bar-sub').textContent='已連線 — 跨裝置同步';
   $('logout-btn').style.display='none';
   if($('inp-emp')) $('inp-emp').value='';
-  if($('social-search')) $('social-search').value='';
-  setErr('login-err','');
+  if($('social-name-input')) $('social-name-input').value='';
+  setErr('login-err',''); setErr('social-login-err','');
   $('today-modal').style.display='none';
   showOnly('pnl-identity');
 }
