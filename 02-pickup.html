@@ -93,10 +93,10 @@ select.sf{padding:7px 10px;border:1px solid var(--g300);border-radius:8px;font-s
     <div class="login-title">取餐管理系統</div>
     <div class="login-sub">請使用管理員帳號登入</div>
     <div class="lbl">員編</div>
-    <input class="fc" id="l-emp" placeholder="例：Y00780" maxlength="10"
+    <input class="fc" id="l-emp" placeholder="例：Y00001" maxlength="10"
       oninput="this.value=this.value.toUpperCase()"
       onkeydown="if(event.key==='Enter')doLogin()">
-    <div class="lbl">密碼（預設與員編相同）</div>
+    <div class="lbl">密碼</div>
     <input class="fc" id="l-pwd" type="password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn-login" onclick="doLogin()">登入 →</button>
     <div class="login-err" id="login-err"></div>
@@ -124,8 +124,17 @@ select.sf{padding:7px 10px;border:1px solid var(--g300);border-radius:8px;font-s
 <div class="wrap">
   <div class="filter-bar">
     <label>日期：</label><select class="sf" id="flt-date" onchange="render()"></select>
-    <label>部門：</label><select class="sf" id="flt-dept" onchange="render()"><option value="">全部</option></select>
-    <label>地點：</label><select class="sf" id="flt-loc" onchange="render()"><option value="">全部</option><option value="douliou">斗六院區</option><option value="huwei">虎尾院區</option></select>
+    <label>部門：</label>
+    <select class="sf" id="flt-dept" onchange="render()">
+      <option value="">全部</option>
+      <option value="rehab">復健部</option>
+      <option value="social">社工室</option>
+    </select>
+    <label>地點：</label>
+    <select class="sf" id="flt-loc" onchange="render()">
+      <option value="">全部</option>
+      <option value="douliou">斗六院區</option>
+    </select>
     <label>狀態：</label><select class="sf" id="flt-status" onchange="render()"><option value="">全部</option><option value="pending">待領取</option><option value="done">已領取</option></select>
     <div style="margin-left:auto;display:flex;gap:8px">
       <button class="btn btn-o" onclick="window.print()">🖨️ 列印</button>
@@ -203,7 +212,8 @@ function doLogin(){
   if(!pwd){setLoginErr('請輸入密碼');return;}
   const adm=(DB.admins||{})[emp];
   if(!adm){setLoginErr('⚠️ 查無此員編，請確認是否在管理員名冊中');return;}
-  if(pwd!==emp){setLoginErr('⚠️ 密碼錯誤（預設密碼與員編相同）');return;}
+  const storedPwd=adm.pwd||adm.emp;
+  if(pwd!==storedPwd&&pwd!==adm.emp){setLoginErr('⚠️ 密碼錯誤');return;}
   loggedAdmin=adm;
   $('login-wrap').style.display='none';
   $('main-wrap').style.display='block';
@@ -242,10 +252,9 @@ function render(){
 
   const allOrds=Object.values(DB.orders||{}).filter(o=>o.date===dateStr);
 
-  /* Dept dropdown */
-  const depts=[...new Set(allOrds.map(o=>o.dept))].sort();
-  const deptSel=$('flt-dept');const prevDept=deptSel.value;
-  deptSel.innerHTML='<option value="">全部</option>'+depts.map(d=>`<option value="${d}"${d===prevDept?' selected':''}>${d}</option>`).join('');
+  /* Dept dropdown — 固定只顯示復健部/社工室 */
+  const deptSel=$('flt-dept');
+  // 保留目前選項（已在 HTML 寫死），不重新渲染
 
   /* Stats */
   const total=allOrds.reduce((s,o)=>s+o.qty,0);
@@ -284,7 +293,9 @@ function render(){
 
   /* Filtered for cards */
   let filtered=[...allOrds];
-  if(deptF)filtered=filtered.filter(o=>o.dept===deptF);
+  // 部門篩選：用 deptType（rehab/social），相容舊資料用 dept 名稱
+  if(deptF==='rehab') filtered=filtered.filter(o=>o.deptType==='rehab'||(!o.deptType&&o.dept!=='社工室'));
+  else if(deptF==='social') filtered=filtered.filter(o=>o.deptType==='social'||o.dept==='社工室');
   if(locF) filtered=filtered.filter(o=>o.loc===locF);
   if(statF)filtered=filtered.filter(o=>o.status===statF);
 
