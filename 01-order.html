@@ -211,15 +211,28 @@ body{font-family:'Noto Sans TC',sans-serif;background:#b9dfc0;min-height:100vh;d
   <div id="pnl-order" class="pnl">
     <div class="row"><div class="av">🤖</div><div class="bub">請選擇<b>日期</b>及午餐餐點：</div></div>
     <div class="card">
-      <div class="card-hd">📅 選擇日期</div>
+      <div class="card-hd">📅 選擇日期與院區</div>
       <div class="card-bd">
         <div><div class="lbl">取餐日期</div><select class="fc" id="sel-date" onchange="onDateChange()"></select></div>
+        <div style="margin-top:10px">
+          <div class="lbl">取餐院區</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+            <button class="dept-btn rehab sel" id="loc-btn-douliou" onclick="selectLoc('douliou')" style="padding:12px 10px">
+              <span class="dept-btn-ico" style="font-size:24px">🏥</span>
+              <span class="dept-btn-name" style="font-size:13px">斗六院區</span>
+            </button>
+            <button class="dept-btn social" id="loc-btn-huwei" onclick="selectLoc('huwei')" style="padding:12px 10px">
+              <span class="dept-btn-ico" style="font-size:24px">🏨</span>
+              <span class="dept-btn-name" style="font-size:13px">虎尾院區</span>
+            </button>
+          </div>
+        </div>
         <div id="s1-msg"></div>
       </div>
     </div>
     <div id="pnl-meal-card" style="display:none">
       <div class="card">
-        <div class="card-hd">🌞 午餐 — 斗六院區</div>
+        <div class="card-hd" id="meal-card-hd">🌞 午餐 — 斗六院區</div>
         <div class="card-bd">
           <div id="meal-list"></div>
           <div class="cart">
@@ -512,6 +525,20 @@ function populateDateSelect(){
   }
 }
 
+let selectedLoc = 'douliou';  // 預設斗六院區
+
+function selectLoc(loc){
+  selectedLoc = loc;
+  // 更新按鈕樣式
+  $('loc-btn-douliou').className = 'dept-btn rehab' + (loc==='douliou' ? ' sel' : '');
+  $('loc-btn-huwei').className   = 'dept-btn social' + (loc==='huwei'   ? ' sel' : '');
+  // 更新標題
+  const hd = $('meal-card-hd');
+  if(hd) hd.textContent = '🌞 午餐 — ' + locLbl(loc);
+  // 更新 orderForm
+  if(orderForm.date){ orderForm.loc = loc; }
+}
+
 function onDateChange(){
   const date=$('sel-date').value;
   const mealCard=$('pnl-meal-card');
@@ -521,8 +548,7 @@ function onDateChange(){
   if(!menu){ setMsg('s1-msg','⚠️ 此日期無菜單','r'); mealCard.style.display='none'; return; }
   if(menu.holiday){ setMsg('s1-msg','⚠️ 此日為假日，不供餐','r'); mealCard.style.display='none'; return; }
   if(isClosed(date)){ setMsg('s1-msg','🔒 本日訂餐已截止（09:00）','r'); mealCard.style.display='none'; return; }
-  // 固定午餐、斗六院區
-  orderForm={date, mealType:'lunch', loc:'douliou', menu};
+  orderForm={date, mealType:'lunch', loc:selectedLoc, menu};
   cart=[];
   renderMealList();
   renderCart();
@@ -595,7 +621,7 @@ function renderConfirm(){
   const {date}=orderForm;
   const confInfo=$('conf-info');
   if(confInfo){
-    confInfo.innerHTML=`📅 ${fmtD(date)}　🌞 午餐　📍 斗六院區`;
+    confInfo.innerHTML=`📅 ${fmtD(date)}　🌞 午餐　📍 ${locLbl(orderForm.loc||selectedLoc)}`;
     confInfo.style.display='block';
   }
 }
@@ -620,11 +646,11 @@ async function submitOrder(){
   });
   await fbUpdate(updates);
   const items=cart.map(c=>`${c.name} × ${c.qty}`).join('<br>');
-  $('ok-detail').innerHTML=`📅 ${fmtD(date)}　🌞 午餐　📍 斗六院區<br>${items}`;
+  $('ok-detail').innerHTML=`📅 ${fmtD(date)}　🌞 午餐　📍 ${locLbl(loc)}<br>${items}`;
   cart=[]; showOnly('pnl-ok'); toast('訂單送出成功！');
 }
 
-function resetOrder(){ cart=[]; orderForm={}; showOrder(); }
+function resetOrder(){ cart=[]; orderForm={}; selectedLoc='douliou'; showOrder(); }
 
 /* ── Pickup ── */
 function showPickup(){

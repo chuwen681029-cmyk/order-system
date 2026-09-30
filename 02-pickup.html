@@ -134,6 +134,7 @@ select.sf{padding:7px 10px;border:1px solid var(--g300);border-radius:8px;font-s
     <select class="sf" id="flt-loc" onchange="render()">
       <option value="">全部</option>
       <option value="douliou">斗六院區</option>
+      <option value="huwei">虎尾院區</option>
     </select>
     <label>狀態：</label><select class="sf" id="flt-status" onchange="render()"><option value="">全部</option><option value="pending">待領取</option><option value="done">已領取</option></select>
     <div style="margin-left:auto;display:flex;gap:8px">
@@ -307,48 +308,80 @@ function render(){
   const byDept={};
   Object.values(byEmp).forEach(u=>{if(!byDept[u.dept])byDept[u.dept]=[];byDept[u.dept].push(u);});
 
+  /* 判斷是否為社工室訂單 */
+  function isSocial(o){ return o.deptType==='social'||o.dept==='社工室'; }
+
+  /* 產生人員卡片 HTML */
+  function renderPersonCard(u){
+    const allDone=u.items.every(i=>i.status==='done');
+    const merged={};
+    u.items.forEach(o=>{
+      const k=o.dish+'-'+o.rice;
+      if(!merged[k]) merged[k]={dk:o.dish,lbl:dishLbl(o.dish),nm:o.dishName||dishName(o.dish,menu),rice:riceLbl(o.rice),qty:0};
+      merged[k].qty+=o.qty;
+    });
+    const mealRows=Object.values(merged).map(m=>{
+      let nm=(menu&&menu[m.dk])||m.nm||'';
+      while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
+      if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
+      nm=nm.trim();
+      return `<div class="sc-meal-row">
+        <span class="sc-meal-lbl">${m.rice}</span>
+        <span class="sc-meal-name">${nm}</span>
+        <span class="sc-meal-qty">× ${m.qty}</span>
+      </div>`;
+    }).join('');
+    const locs=[...new Set(u.items.map(o=>locLbl(o.loc)))].join('、');
+    const types=[...new Set(u.items.map(o=>typeLbl(o.mealType)))].join('、');
+    return `<div class="sc ${allDone?'sc-done':''}">
+      <div class="sc-name">${allDone?'✅':'🙋'}&nbsp;${u.name}<span class="sc-emp">${u.emp}</span></div>
+      <div class="sc-dept">🏥 ${u.dept}　📍 ${locs}　${types}</div>
+      <div class="sc-meals" style="margin-top:8px">${mealRows}</div>
+      <button class="sc-btn" ${allDone?'disabled':''} onclick="markDone('${u.emp}','${dateStr}')">
+        ${allDone?'✅ 已領取':'點此確認取餐'}
+      </button>
+    </div>`;
+  }
+
   let html='';
   if(!Object.keys(byDept).length)html='<div class="no-data">⚠️ 無符合條件的訂單</div>';
 
   Object.keys(byDept).sort().forEach(dept=>{
-    html+=`<div class="dept-block"><div class="dept-head">🏥 ${dept}</div><div class="staff-grid">`;
-    byDept[dept].sort((a,b)=>{
+    /* 判斷此部門是否為社工室（任一筆訂單是社工室即是） */
+    const firstUser=byDept[dept][0];
+    const firstOrder=firstUser?.items[0];
+    const deptIsSocial=firstOrder?isSocial(firstOrder):false;
+
+    const sortedUsers=byDept[dept].sort((a,b)=>{
       const ad=a.items.every(i=>i.status==='done'),bd=b.items.every(i=>i.status==='done');
       return ad===bd?0:ad?1:-1;
-    }).forEach(u=>{
-      const allDone=u.items.every(i=>i.status==='done');
-      /* 合併同 dish+rice，顯示實際菜名 */
-      const merged={};
-      u.items.forEach(o=>{
-        const k=o.dish+'-'+o.rice;
-        if(!merged[k]) merged[k]={dk:o.dish,lbl:dishLbl(o.dish),nm:o.dishName||dishName(o.dish,menu),rice:riceLbl(o.rice),qty:0};
-        merged[k].qty+=o.qty;
-      });
-      const mealRows=Object.values(merged).map(m=>{
-        /* 優先從菜單直接取純菜名 */
-        let nm=(menu&&menu[m.dk])||m.nm||'';
-        while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
-        if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
-        nm=nm.trim();
-        return `<div class="sc-meal-row">
-          <span class="sc-meal-lbl">${m.rice}</span>
-          <span class="sc-meal-name">${nm}</span>
-          <span class="sc-meal-qty">× ${m.qty}</span>
-        </div>`;
-      }).join('');
-      const locs=[...new Set(u.items.map(o=>locLbl(o.loc)))].join('、');
-      const types=[...new Set(u.items.map(o=>typeLbl(o.mealType)))].join('、');
-      html+=`
-      <div class="sc ${allDone?'sc-done':''}">
-        <div class="sc-name">${allDone?'✅':'🙋'}&nbsp;${u.name}<span class="sc-emp">${u.emp}</span></div>
-        <div class="sc-dept">🏥 ${u.dept}　📍 ${locs}　${types}</div>
-        <div class="sc-meals" style="margin-top:8px">${mealRows}</div>
-        <button class="sc-btn" ${allDone?'disabled':''} onclick="markDone('${u.emp}','${dateStr}')">
-          ${allDone?'✅ 已領取':'點此確認取餐'}
-        </button>
-      </div>`;
     });
-    html+='</div></div>';
+
+    if(deptIsSocial && !locF){
+      /* 社工室未篩選院區時：分斗六 / 虎尾兩個子區塊 */
+      const LOCS=[{key:'douliou',lbl:'斗六院區',ico:'🏥'},{key:'huwei',lbl:'虎尾院區',ico:'🏨'}];
+      html+=`<div class="dept-block"><div class="dept-head" style="border-left-color:#7c3aed">👥 ${dept}</div>`;
+      LOCS.forEach(({key,lbl,ico})=>{
+        const usersInLoc=sortedUsers.filter(u=>u.items.some(o=>o.loc===key));
+        if(!usersInLoc.length)return;
+        const totalLoc=usersInLoc.reduce((s,u)=>s+u.items.reduce((ss,o)=>ss+o.qty,0),0);
+        const doneLoc=usersInLoc.reduce((s,u)=>s+u.items.filter(o=>o.status==='done').reduce((ss,o)=>ss+o.qty,0),0);
+        html+=`<div style="margin-bottom:14px">
+          <div style="font-size:13px;font-weight:700;color:#7c3aed;padding:6px 12px;background:#f3e8ff;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+            <span>${ico} ${lbl}</span>
+            <span style="font-size:12px;color:#6b21a8">共 ${totalLoc} 份，已領 ${doneLoc} 份</span>
+          </div>
+          <div class="staff-grid">`;
+        usersInLoc.forEach(u=>{ html+=renderPersonCard(u); });
+        html+='</div></div>';
+      });
+      html+='</div>';
+    } else {
+      /* 復健部或已篩選院區時：原本的展示方式 */
+      html+=`<div class="dept-block"><div class="dept-head">🏥 ${dept}</div><div class="staff-grid">`;
+      sortedUsers.forEach(u=>{ html+=renderPersonCard(u); });
+      html+='</div></div>';
+    }
   });
   $('cards-area').innerHTML=html;
 }
