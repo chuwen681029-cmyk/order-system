@@ -496,11 +496,11 @@ async function doRegister(){
 function showOrder(){
   if(!currentUser){ toast('請先登入','r'); showOnly('pnl-identity'); return; }
   cart=[]; orderForm={};
-  showOnly('pnl-order');
-  populateDateSelect(); setMsg('s1-msg','');
   $('pnl-meal-card').style.display='none';
-  // 額外保護：確保 populateDateSelect 後若已有日期，一定觸發 onDateChange
-  setTimeout(()=>{ const s=$('sel-date'); if(s&&s.value) onDateChange(); },100);
+  setMsg('s1-msg','');
+  showOnly('pnl-order');
+  // 等 DOM 更新完再填日期並觸發菜單顯示
+  setTimeout(populateDateSelect, 0);
 }
 
 function populateDateSelect(){
@@ -521,13 +521,13 @@ function populateDateSelect(){
     if(d===cur) opt.selected=true;
     sel.appendChild(opt);
   });
+  // 若沒有被選中的值，自動選第一個可用日期
   if(!sel.value){
     const first=[...sel.options].find(o=>o.value&&!o.disabled);
     if(first) sel.value=first.value;
   }
-  // 用 setTimeout 確保所有同步操作完成後再觸發 onDateChange
-  const _v=sel.value;
-  if(_v) setTimeout(()=>{ const s=$('sel-date'); if(s&&s.value) onDateChange(); },50);
+  // 有日期就直接呼叫（同步，不用 setTimeout，避免被後面的 display:none 覆蓋）
+  if(sel.value) onDateChange();
 }
 
 let selectedLoc = 'douliou';  // 預設斗六院區
