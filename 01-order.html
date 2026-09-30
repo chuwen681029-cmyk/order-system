@@ -521,8 +521,10 @@ function populateDateSelect(){
   });
   if(!sel.value){
     const first=[...sel.options].find(o=>o.value&&!o.disabled);
-    if(first){ first.selected=true; onDateChange(); }
+    if(first){ first.selected=true; }
   }
+  // 每次重建選單後都觸發 onDateChange（確保有日期時立即顯示菜單）
+  if(sel.value) onDateChange();
 }
 
 let selectedLoc = 'douliou';  // 預設斗六院區
@@ -697,6 +699,7 @@ async function doMyPickup(id){
 }
 
 window.selectIdentity=selectIdentity;
+window.selectLoc=selectLoc;
 window.doLogin=doLogin; window.doLogout=doLogout;
 window.showRegister=showRegister; window.doRegister=doRegister;
 window.filterSocialList=filterSocialList; window.pickSocialName=pickSocialName; window.doSocialLogin=doSocialLogin;

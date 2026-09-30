@@ -539,30 +539,45 @@ function renderDeptOrders(dept, ords, menu){
   const people=new Set(ords.map(o=>o.emp)).size;
   const statColor=dept==='social'?'c-p':'c-g';
 
+  const dlOrds=ords.filter(o=>(o.loc||'douliou')==='douliou');
+  const hwOrds=ords.filter(o=>(o.loc||'douliou')==='huwei');
+  const dlTotal=dlOrds.reduce((s,o)=>s+o.qty,0);
+  const hwTotal=hwOrds.reduce((s,o)=>s+o.qty,0);
   $('ord-stats-'+dept).innerHTML=`
     <div class="stat"><div class="stat-lbl">總訂份數</div><div class="stat-val">${total}</div></div>
+    <div class="stat"><div class="stat-lbl">🏥 斗六院區</div><div class="stat-val c-a">${dlTotal}</div></div>
+    <div class="stat"><div class="stat-lbl">🏨 虎尾院區</div><div class="stat-val" style="color:var(--purple,#7c3aed)">${hwTotal}</div></div>
     <div class="stat"><div class="stat-lbl">已領取</div><div class="stat-val ${statColor}">${done}</div></div>
     <div class="stat"><div class="stat-lbl">未領取</div><div class="stat-val c-r">${total-done}</div></div>
     <div class="stat"><div class="stat-lbl">訂餐人數</div><div class="stat-val c-a">${people}</div></div>`;
 
   const DISH_KEYS=['main1','main2','veg','dinnerMain1','dinnerMain2','dinnerVeg'];
-  let sb='';
-  DISH_KEYS.forEach(dk=>{
-    ['white','health'].forEach(r=>{
-      const rows=ords.filter(o=>o.dish===dk&&o.rice===r);
-      const t=rows.reduce((s,o)=>s+o.qty,0); if(!t) return;
-      const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
-      let nm=(menu&&menu[dk])||rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
-      while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
-      if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
-      nm=nm.trim();
-      sb+=`<tr><td>${dishLbl(dk)}</td><td style="font-weight:600">${nm}</td><td>${riceLbl(r)}</td>
-        <td style="text-align:center">${t}</td>
-        <td style="text-align:center;color:var(--pri-l);font-weight:600">${dn}</td>
-        <td style="text-align:center;color:${t-dn>0?'var(--red)':'inherit'};font-weight:${t-dn>0?'700':'400'}">${t-dn}</td></tr>`;
+  /* 依院區分組顯示份數彙總 */
+  const LOC_LIST=[['douliou','🏥 斗六院區'],['huwei','🏨 虎尾院區']];
+  let sb=''; let hasAny=false;
+  LOC_LIST.forEach(([locKey,locTitle])=>{
+    const locOrds=ords.filter(o=>(o.loc||'douliou')===locKey);
+    const locTotal=locOrds.reduce((s,o)=>s+o.qty,0);
+    if(!locTotal) return;
+    hasAny=true;
+    sb+=`<tr style="background:var(--g50)"><td colspan="6" style="font-weight:700;font-size:13px;color:var(--pri);padding:8px 12px;border-top:2px solid var(--pri-light,#c5d8f8)">${locTitle}（共 ${locTotal} 份）</td></tr>`;
+    DISH_KEYS.forEach(dk=>{
+      ['white','health'].forEach(r=>{
+        const rows=locOrds.filter(o=>o.dish===dk&&o.rice===r);
+        const t=rows.reduce((s,o)=>s+o.qty,0); if(!t) return;
+        const dn=rows.filter(o=>o.status==='done').reduce((s,o)=>s+o.qty,0);
+        let nm=(menu&&menu[dk])||rows[0]?.dishName||dishName(dk,menu)||dishLbl(dk);
+        while(/(＋白飯|＋養生飯)$/.test(nm)) nm=nm.replace(/＋(白飯|養生飯)$/,'');
+        if(nm.includes('：')) nm=nm.split('：').slice(-1)[0];
+        nm=nm.trim();
+        sb+=`<tr><td>${dishLbl(dk)}</td><td style="font-weight:600">${nm}</td><td>${riceLbl(r)}</td>
+          <td style="text-align:center">${t}</td>
+          <td style="text-align:center;color:var(--pri-l);font-weight:600">${dn}</td>
+          <td style="text-align:center;color:${t-dn>0?'var(--red)':'inherit'};font-weight:${t-dn>0?'700':'400'}">${t-dn}</td></tr>`;
+      });
     });
   });
-  $('sum-tbody-'+dept).innerHTML=sb||`<tr><td colspan="6" class="no-data">此日期無訂單</td></tr>`;
+  $('sum-tbody-'+dept).innerHTML=hasAny?sb:`<tr><td colspan="6" class="no-data">此日期無訂單</td></tr>`;
 
   let ob='';
   ords.forEach(o=>{
@@ -694,21 +709,29 @@ function importMenuExcel(input){
 }
 
 function downloadMenuTemplate(){
-  if(typeof XLSX==='undefined'){toast('❌ 請稍後再試（XLSX 尚未載入）','tr');return;}
-  const ws=XLSX.utils.aoa_to_sheet([
-    ['日期','主菜一','主菜二','素食'],
-    ['2026/01/01','例：椒鹽豬柳','例：酒釀雞腿','例：紅燒豆皮結'],
-    ['2026/01/02','','',''],
-    ['2026/01/03','','',''],
-    ['2026/01/06','','',''],
-    ['2026/01/07','','',''],
-  ]);
-  /* 設定欄寬 */
-  ws['!cols']=[{wch:14},{wch:18},{wch:18},{wch:18}];
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,'菜單',ws);
-  XLSX.writeFile(wb,'院餐菜單範本.xlsx');
-  toast('已下載空白範本','tg');
+  try{
+    if(typeof XLSX==='undefined'){toast('❌ 請稍後再試（XLSX 尚未載入）','tr');return;}
+    const ws=XLSX.utils.aoa_to_sheet([
+      ['日期','主菜一','主菜二','素食'],
+      ['2026/01/01','例：椒鹽豬柳','例：酒釀雞腿','例：紅燒豆皮結'],
+      ['2026/01/02','','',''],
+      ['2026/01/03','','',''],
+      ['2026/01/06','','',''],
+      ['2026/01/07','','',''],
+    ]);
+    ws['!cols']=[{wch:14},{wch:18},{wch:18},{wch:18}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,'菜單',ws);
+    /* 用 Blob + createObjectURL 確保各瀏覽器及 GitHub Pages 均可下載 */
+    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([wbout],{type:'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='院餐菜單範本.xlsx';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},200);
+    toast('已下載空白範本','tg');
+  }catch(err){toast('❌ 下載失敗：'+err.message,'tr');}
 }
 async function saveImportedMenus(){
   if(!importedMenus||Object.keys(importedMenus).length===0){toast('請先選擇 Excel 檔案並讀取','tr');return;}
