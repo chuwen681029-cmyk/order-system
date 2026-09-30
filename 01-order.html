@@ -495,10 +495,12 @@ async function doRegister(){
 /* ── Order ── */
 function showOrder(){
   if(!currentUser){ toast('請先登入','r'); showOnly('pnl-identity'); return; }
-  populateDateSelect(); setMsg('s1-msg','');
-  $('pnl-meal-card').style.display='none';
   cart=[]; orderForm={};
   showOnly('pnl-order');
+  populateDateSelect(); setMsg('s1-msg','');
+  $('pnl-meal-card').style.display='none';
+  // 額外保護：確保 populateDateSelect 後若已有日期，一定觸發 onDateChange
+  setTimeout(()=>{ const s=$('sel-date'); if(s&&s.value) onDateChange(); },100);
 }
 
 function populateDateSelect(){
@@ -521,12 +523,11 @@ function populateDateSelect(){
   });
   if(!sel.value){
     const first=[...sel.options].find(o=>o.value&&!o.disabled);
-    if(first){
-      sel.value=first.value;  // 直接設 .value 確保 select 立即反映
-    }
+    if(first) sel.value=first.value;
   }
-  // 每次重建選單後都觸發 onDateChange（確保有日期時立即顯示菜單）
-  if(sel.value) onDateChange();
+  // 用 setTimeout 確保所有同步操作完成後再觸發 onDateChange
+  const _v=sel.value;
+  if(_v) setTimeout(()=>{ const s=$('sel-date'); if(s&&s.value) onDateChange(); },50);
 }
 
 let selectedLoc = 'douliou';  // 預設斗六院區
