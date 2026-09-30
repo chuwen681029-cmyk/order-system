@@ -521,7 +521,9 @@ function populateDateSelect(){
   });
   if(!sel.value){
     const first=[...sel.options].find(o=>o.value&&!o.disabled);
-    if(first){ first.selected=true; }
+    if(first){
+      sel.value=first.value;  // 直接設 .value 確保 select 立即反映
+    }
   }
   // 每次重建選單後都觸發 onDateChange（確保有日期時立即顯示菜單）
   if(sel.value) onDateChange();
